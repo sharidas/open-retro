@@ -3,7 +3,58 @@
 Open Retro is a planned free and open-source retrospective tool for teams that
 need anonymous feedback without accounts, tracking, or hidden paywalls.
 
-The project is currently in the planning and early development stage.
+The project is in early development. The first local development slice provides
+a React page connected to an API health endpoint; retrospective features are
+not implemented yet.
+
+## Run Locally With Docker
+
+Prerequisites: Docker Engine or Docker Desktop with Docker Compose, and Git.
+Node.js and npm run inside the development container; no host installation is
+required. Docker downloads the base image and packages on the first build.
+
+```bash
+docker compose up --build
+```
+
+Open [Open Retro locally](http://localhost:5173). The page should display
+“Connected — the server is ready.” Only localhost can access the published port.
+Stop with Ctrl+C, then use `docker compose down` to remove the container.
+
+For background operation, use `docker compose up --build -d` and view output with
+`docker compose logs -f dev`.
+
+Source files are mounted from your checkout: edit `apps/web/src` or
+`apps/api/src` and the development servers reload automatically. After changing
+dependencies, TypeScript configuration, or Docker configuration, rebuild with
+`docker compose up --build`. This container is for development, not production.
+
+Run verification inside the running container:
+
+```bash
+docker compose exec dev npm run check
+docker compose exec dev npm run build
+```
+
+`check` validates TypeScript; `build` compiles the API and bundles the frontend.
+Neither installs anything on your machine. Container dependencies and build
+outputs stay inside the container.
+
+## How the Foundation Works
+
+- `apps/web`: React and TypeScript UI, served by Vite on port 5173.
+- `apps/api`: Hono API running on Node.js, internally on port 3000.
+- The browser requests `/api/health`; Vite forwards `/api` requests to Hono,
+  which returns JSON. The page displays the result and offers retry on failure.
+- npm workspaces manage both applications with one dependency lockfile.
+
+React/Vite provide the interactive UI and fast feedback while editing. Hono
+keeps the API small and supports a future Cloudflare adapter. CSS Modules scope
+styles to components. SQLite, validation, and domain tests arrive in later tasks.
+
+Development runs locally. The public deployment must stay within a $0 budget:
+use free services only, accept quota-related unavailability, and do not enable
+paid plans. No Cloudflare account is needed for this task.
 
 ## Goal
 
@@ -21,7 +72,7 @@ The first version should stay intentionally small:
 
 - create a room;
 - join a room through a participant link;
-- configure three retrospective columns;
+- let the facilitator configure up to five retrospective columns;
 - submit anonymous cards;
 - keep cards hidden during the writing phase;
 - reveal cards only when the facilitator chooses;
@@ -49,10 +100,11 @@ AI summaries, file uploads, paid plans, permanent history, or analytics.
 
 ## Current Status
 
-This repository is being prepared for initial development. See:
+See:
 
 - [Project brief](PROJECT_BRIEF.md)
 - [MVP plan](docs/mvp.md)
+- [Step-by-step implementation plan](docs/implementation-plan.md)
 - [Architecture notes](docs/architecture.md)
 
 ## License

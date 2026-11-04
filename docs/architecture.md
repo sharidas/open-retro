@@ -17,6 +17,7 @@ preserving clear boundaries between:
 ## Domain Concepts
 
 - Room: a retrospective session with lifecycle state and configured columns.
+  The facilitator configures the columns; each room supports at most five.
 - Facilitator secret: private capability used to reveal, close, or delete a
   room.
 - Participant token: private participant-side capability used for editing own

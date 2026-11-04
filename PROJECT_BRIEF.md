@@ -19,6 +19,7 @@ Build a privacy-focused retrospective application that supports:
 ## Core workflow
 
 1. A facilitator creates a retrospective room.
+   The facilitator can configure up to five retrospective columns.
 2. The facilitator receives a private facilitator link or secret.
 3. Participants join through a separate participant link.
 4. Participants do not provide names, email addresses, or accounts.
@@ -39,7 +40,7 @@ The first release must include only:
 
 - Create a room
 - Join a room through a link
-- Three configurable retrospective columns
+- Facilitator-configurable retrospective columns, with a maximum of five per room
 - Anonymous card submission
 - Private writing phase
 - Facilitator-controlled reveal
