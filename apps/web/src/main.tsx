@@ -1,29 +1,13 @@
 import { StrictMode, useEffect, useRef, useState, type FormEvent } from 'react'
 import { createRoot } from 'react-dom/client'
 import styles from './App.module.css'
+import { CopyLink } from './CopyLink'
+import { RoomPage } from './RoomPage'
+import { roomSession } from './session'
 
 type Column = { id: number; name: string }
 type CreatedRoom = { participantLink: string; facilitatorLink: string; expiresAt: number }
 
-function CopyLink({ label, value }: { label: string; value: string }) {
-  const [message, setMessage] = useState('')
-  const input = useRef<HTMLInputElement>(null)
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(value)
-      setMessage('Copied.')
-    } catch {
-      input.current?.focus()
-      input.current?.select()
-      setMessage('Copy unavailable. The link is selected; copy it manually.')
-    }
-  }
-  return <div className={styles.linkGroup}>
-    <label>{label}<input ref={input} readOnly value={value} spellCheck={false} onFocus={(event) => event.target.select()} /></label>
-    <button type="button" className={styles.secondary} onClick={() => void copy()}>Copy {label.toLowerCase()}</button>
-    <span className={styles.copyStatus} role="status">{message}</span>
-  </div>
-}
 
 function App() {
   const [columns, setColumns] = useState<Column[]>([
@@ -85,30 +69,25 @@ function App() {
     }
   }
 
-  // Joining and authenticated facilitator views are task 06. Keep generated
-  // links from accidentally displaying another creation form in the meantime.
-  const roomPath = /^\/rooms\/[0-9a-f-]{36}(\/facilitator)?\/?$/.test(window.location.pathname)
+  if (roomSession) return <RoomPage session={roomSession} />
   return <main className={styles.page}>
     <header>
       <p className={styles.eyebrow}>OPEN RETRO</p>
       <h1>A little reflection.<br />A better next sprint.</h1>
       <p className={styles.intro}>A private space for your team to share what went well, what could improve, and what to try next.</p>
     </header>
-    {roomPath ? <section className={styles.panel}>
-      <h2>Your room link is ready for the next step</h2>
-      <p>Room creation is working. Joining rooms and facilitator views are coming next; this link does not open a board yet.</p>
-      <a href="/">Back to room creation</a>
-    </section> : created ? <section className={styles.panel} aria-labelledby="created-heading">
+    {created ? <section className={styles.panel} aria-labelledby="created-heading">
       <p className={styles.eyebrow}>ROOM CREATED</p>
       <h2 id="created-heading" ref={resultHeading} tabIndex={-1}>Your next conversation starts here.</h2>
       <p>Share the participant link with your team. Save the facilitator link privately before leaving this page.</p>
       <CopyLink label="Participant link" value={created.participantLink} />
       <div className={styles.private}>
-        <p><strong>Keep the facilitator link private.</strong> Anyone with it can control the room once facilitator controls are available. We cannot recover it if you lose it.</p>
+        <p><strong>Keep the facilitator link private.</strong> Anyone with it has facilitator access to the room. We cannot recover it if you lose it.</p>
         <CopyLink label="Facilitator link" value={created.facilitatorLink} />
       </div>
       <p className={styles.hint}>Links are kept only on this page. Save them before refreshing. Room expiry: {new Date(created.expiresAt).toLocaleString()} (your local time).</p>
-      <p className={styles.notice}>Early preview: joining rooms, private cards, and facilitator controls are coming next. Save these links; the board is not available yet.</p>
+      <p className={styles.notice}>You can now open the room. Private cards, reveal controls, and voting are coming next.</p>
+      <p><a href={created.participantLink}>Open participant room</a> · <a href={created.facilitatorLink}>Open facilitator room</a></p>
       <button type="button" className={styles.secondary} onClick={() => { setCreated(null); setError('') }}>Create another room</button>
     </section> : <section className={styles.panel} aria-labelledby="create-heading">
       <div className={styles.sectionHeader}><h2 id="create-heading">Make space for your sprint</h2><span className={styles.badge}>No accounts needed</span></div>

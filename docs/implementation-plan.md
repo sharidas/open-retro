@@ -137,12 +137,20 @@ Demo: open the app, reach the API, and verify that room data persists.
   five-column creation, link separation, copy feedback, and a narrow-screen
   layout. TypeScript checks, production build, and all 55 API/domain/storage
   tests passed. Link destinations show preview notices until task 06.
-- [ ] **06 — Join anonymously.** Add participant and facilitator routes and
+- [x] **06 — Join anonymously.** Add participant and facilitator routes and
   room-scoped participant tokens, storing only token hashes on the server.
   Keep secrets out of ordinary share links, response payloads, and application
   logs; choose and document browser storage and link handling.
   Done when two browser sessions join independently without names or accounts.
   Learn: browser sessions, authentication, and authorization.
+  Completed with idempotent anonymous joining, room-scoped hash registration,
+  participant/facilitator views, and configured column displays. Participant
+  credentials use local storage; facilitator fragments are consumed and removed
+  from the address bar, with tab session storage supporting reloads. All 65 tests,
+  type checks, and production build passed. Browser checks used localhost and
+  127.0.0.1 as storage-isolated sessions; the database confirmed two distinct
+  hashes and no duplicate after reload. Facilitator reload and missing-secret
+  denial also passed. Writing and lifecycle controls remain later tasks.
 
 Demo: create a five-column room and join it from a separate browser session.
 

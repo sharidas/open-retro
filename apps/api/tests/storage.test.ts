@@ -65,6 +65,7 @@ describe('SQLite room persistence', () => {
     expect(await second.db.all(sql`SELECT name FROM schema_migrations ORDER BY name`)).toEqual([
       { name: '0001_rooms.sql' },
       { name: '0002_facilitator_secret.sql' },
+      { name: '0003_participants.sql' },
     ])
   })
 

@@ -51,9 +51,39 @@ facilitator capability and cannot pass this check; create a new room instead.
 
 This protected metadata read establishes the access boundary. Reveal, close,
 and delete operations are deliberately left for their planned tasks. Participant
-joining is also later work. The form generates separate participant and
+joining now has separate endpoints below. The form generates separate participant and
 facilitator links. Only the latter contains a secret, encoded in its URL
-fragment. Both routes currently display a preview notice until task 06.
+fragment. The facilitator route consumes this fragment, removes it from the
+address bar, and keeps the credential in session storage for that tab.
+
+## Anonymous Participant Sessions
+
+The browser generates a cryptographically random 32-byte token, encoded as
+43 base64url characters, and stores it in local storage under a room-specific
+key. It is not a name, email address, or account. Tokens travel only in
+`Authorization: Bearer <token>` headers, never share links or query strings.
+
+- `POST /api/rooms/:id/join`: registers the token hash for this room and returns
+  HTTP 200 with `{ "room": { ... } }`. Repeating the same join is idempotent,
+  including concurrent requests. There is no response token or participant ID.
+- `GET /api/rooms/:id`: requires a token already registered in this room and
+  returns the same public metadata. A token registered in another room does not
+  authorize this read or any facilitator operation.
+- Missing/malformed join credentials and unregistered read credentials return
+  401. Valid join requests to missing/expired rooms return 404. Registered reads
+  of expired rooms also return 404. Closed rooms reject new joins with 409;
+  already registered participants can still read them until expiry/deletion.
+
+Migration 0003 adds a `participants` table with a composite room/hash key and
+cascading deletion when a room is removed. It stores no raw token or participant
+profile. Facilitator reads do not expose the table contents or participant counts.
+
+The room page attempts an authenticated read first and joins only if the token
+is not registered. Participant sessions persist across reloads and tabs sharing
+the same browser storage; separate profiles/incognito sessions are independent.
+This does not enforce one person per participant: another browser or cleared
+storage can create a new session. Old local storage entries are not automatically
+cleared yet; retention cleanup remains task 15.
 
 ## Errors and Privacy
 

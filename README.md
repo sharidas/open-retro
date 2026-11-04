@@ -5,7 +5,8 @@ need anonymous feedback without accounts, tracking, or hidden paywalls.
 
 The project is in early development. You can create a room with one to five
 configured columns and receive separate participant and facilitator links.
-Joining rooms, writing cards, and voting are not implemented yet.
+Participants can join anonymously and facilitators can open their private room
+view. Writing cards and voting are not implemented yet.
 
 ## Run Locally With Docker
 
@@ -90,9 +91,25 @@ automatically because creation may already have succeeded on the server.
 After success, copy the participant link for teammates and save the facilitator
 link privately. The facilitator secret is in a URL fragment (`#secret=...`), not
 the path or query string, so browsers do not send it in HTTP requests. Links are
-kept in page memory only for now; save them before refreshing or creating another
-room. Clipboard failures select the text for manual copying. Generated links
-currently open a preview notice; room views and anonymous joining are task 06.
+kept in page memory on the creation screen; save them before refreshing or
+creating another room. Clipboard failures select the text for manual copying.
+
+Participant links now open the configured room. The browser generates a random
+room-specific token and keeps it in local storage so reloads reuse the same
+anonymous session. Joining sends the token in an authorization header; the server
+stores only a hash. Tokens and participant identifiers are not exposed in room
+responses, including facilitator responses. Another profile/incognito session
+has its own token; clearing site storage loses the old session and its ownership.
+If local storage is blocked, the page explains that it is needed to join.
+
+Opening a facilitator link consumes its fragment and removes it from the address
+bar before API calls. The secret is kept in room-specific session storage for
+reloads in that tab. Keep the original private link for future sessions; copying
+the stripped address does not grant access in a fresh tab. If session storage
+is blocked, access lasts only for the current page and a warning is displayed.
+Facilitator access does not create a participant session automatically. Both
+views show configured columns, phase, expiry, and a safe participant share link.
+Card submission and facilitator management controls are still later tasks.
 
 The room model accepts one to five nonempty column names, trims surrounding
 whitespace, preserves column order, and starts in the writing phase. The allowed

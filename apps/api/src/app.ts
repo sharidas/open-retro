@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { z } from 'zod'
-import { createFacilitatorSecret, verifyFacilitatorSecret } from './domain/facilitator.js'
+import { createFacilitatorSecret, hashSecret, verifyFacilitatorSecret } from './domain/facilitator.js'
 import { RoomRuleError } from './domain/room.js'
 import type { roomRepository } from './storage/rooms.js'
 
@@ -24,6 +24,26 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
     return c.json({ error: 'INTERNAL_ERROR' }, 500)
   })
   app.get('/api/health', (c) => c.json({ status: 'ok' }))
+
+  app.post('/api/rooms/:id/join', async (c) => {
+    const token = /^Bearer ([A-Za-z0-9_-]{43})$/.exec(c.req.header('Authorization') ?? '')?.[1]
+    if (!token) return c.json({ error: 'UNAUTHORIZED' }, 401)
+    const room = await rooms.find(c.req.param('id'))
+    if (!room || room.expiresAt <= clock()) return c.json({ error: 'ROOM_NOT_FOUND' }, 404)
+    if (room.state === 'closed') return c.json({ error: 'ROOM_CLOSED' }, 409)
+    await rooms.joinParticipant(room.id, hashSecret(token))
+    return c.json({ room })
+  })
+
+  app.get('/api/rooms/:id', async (c) => {
+    const token = /^Bearer ([A-Za-z0-9_-]{43})$/.exec(c.req.header('Authorization') ?? '')?.[1]
+    if (!token || !await rooms.hasParticipant(c.req.param('id'), hashSecret(token))) {
+      return c.json({ error: 'UNAUTHORIZED' }, 401)
+    }
+    const room = await rooms.find(c.req.param('id'))
+    if (!room || room.expiresAt <= clock()) return c.json({ error: 'ROOM_NOT_FOUND' }, 404)
+    return c.json({ room })
+  })
 
   app.post('/api/rooms', bodyLimit({ maxSize: 8192,
     onError: (c) => c.json({ error: 'BODY_TOO_LARGE' }, 413),

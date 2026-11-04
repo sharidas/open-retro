@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { createRoom } from '../domain/room.js'
 import type { openDatabase } from './database.js'
-import { rooms } from './schema.js'
+import { participants, rooms } from './schema.js'
 
 export const ROOM_LIFETIME_MS = 24 * 60 * 60 * 1000
 // Explicit projection prevents facilitator hashes from leaking through reads.
@@ -15,6 +15,14 @@ type Database = Awaited<ReturnType<typeof openDatabase>>['db']
 
 export function roomRepository(db: Database, clock: () => number = Date.now) {
   return {
+    async joinParticipant(roomId: string, tokenHash: string): Promise<void> {
+      await db.insert(participants).values({ roomId, tokenHash }).onConflictDoNothing()
+    },
+    async hasParticipant(roomId: string, tokenHash: string): Promise<boolean> {
+      const records = await db.select({ roomId: participants.roomId }).from(participants)
+        .where(and(eq(participants.roomId, roomId), eq(participants.tokenHash, tokenHash))).limit(1)
+      return records.length === 1
+    },
     async create(columns: unknown, facilitatorSecretHash: string | null = null): Promise<StoredRoom> {
       const room = createRoom(columns)
       const createdAt = clock()

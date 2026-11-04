@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { sql } from 'drizzle-orm'
 import { createApp } from '../src/app.js'
-import { hashFacilitatorSecret, verifyFacilitatorSecret } from '../src/domain/facilitator.js'
+import { hashSecret, verifyFacilitatorSecret } from '../src/domain/facilitator.js'
 import { openDatabase } from '../src/storage/database.js'
 import { roomRepository } from '../src/storage/rooms.js'
 
@@ -48,7 +48,7 @@ describe('room creation API', () => {
     expect(body.facilitatorSecret).toMatch(/^[A-Za-z0-9_-]{43}$/)
     expect(body.facilitatorSecret).not.toBe(body.room.id)
     const stored = await f.db.all<{ facilitator_secret_hash: string }>(sql`SELECT * FROM rooms`)
-    expect(stored[0].facilitator_secret_hash).toBe(hashFacilitatorSecret(body.facilitatorSecret))
+    expect(stored[0].facilitator_secret_hash).toBe(hashSecret(body.facilitatorSecret))
     expect(JSON.stringify(stored)).not.toContain(body.facilitatorSecret)
     expect(await f.repo.find(body.room.id)).toEqual(body.room)
   })

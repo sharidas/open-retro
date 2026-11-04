@@ -73,8 +73,24 @@ explicitly project public fields to exclude hashes. See [API notes](api.md).
 use temporary databases. Creation validates JSON with Zod and domain rules before
 insertion. The creation response alone returns the raw facilitator secret.
 A protected facilitator metadata endpoint validates bearer credentials and
-denies expired rooms; lifecycle mutation endpoints and participant access remain
-later tasks. The API does not expose storage-only or secret-recovery endpoints.
+denies expired rooms; lifecycle mutation endpoints remain later tasks. The API
+does not expose storage-only or secret-recovery endpoints.
+
+Migration 0003 adds participant token hashes keyed by room, with cascading room
+deletion. Join requests register a hash idempotently; participant reads require
+registration in that room. Both endpoints return only public room metadata.
+No participant list, token hashes, counts, or identifiers reach facilitators.
+New joins are denied after closure; existing participants retain read access.
+
+The browser generates room-specific 256-bit participant tokens and saves them
+in local storage. Facilitator fragments are consumed before requests and removed
+with `history.replaceState`; the private credential is saved separately in
+room-specific session storage. Storage failures receive explicit UI feedback.
+Neither credential is sent in query strings, shareable participant links, or
+ordinary response payloads. As with all browser bearer tokens, scripts running
+on this origin can access browser storage; keep third-party scripts out of the
+application and continue treating user text as text. Sessions are anonymous,
+not proof of distinct people. Client credential cleanup remains retention work.
 
 ## Privacy Boundaries
 
