@@ -5,8 +5,8 @@ import { isCard, type Card } from './card'
 import { SavedCard } from './SavedCard'
 
 
-export function WritingBoard({ session, columns, phase }: {
-  session: RoomSession; columns: string[]; phase: 'writing' | 'revealed' | 'closed'
+export function WritingBoard({ session, columns, phase, available = true, onLocalWork }: {
+  session: RoomSession; columns: string[]; phase: 'writing' | 'revealed' | 'closed'; available?: boolean; onLocalWork?: (present: boolean) => void
 }) {
   const [cards, setCards] = useState<Card[]>([])
   const [drafts, setDrafts] = useState<Record<number, string>>({})
@@ -22,6 +22,9 @@ export function WritingBoard({ session, columns, phase }: {
   const busy = useRef(false)
   const submitController = useRef<AbortController | null>(null)
   const mounted = useRef(true)
+  useEffect(() => {
+    onLocalWork?.(Object.values(drafts).some((text) => text.length > 0) || activeCard !== null)
+  }, [drafts, activeCard, onLocalWork])
   useEffect(() => {
     mounted.current = true
     return () => { mounted.current = false; submitController.current?.abort() }
@@ -68,7 +71,7 @@ export function WritingBoard({ session, columns, phase }: {
 
   async function submit(event: FormEvent, columnIndex: number) {
     event.preventDefault()
-    if (busy.current || activeCard || loading || locked || loadError) return
+    if (busy.current || activeCard || loading || locked || loadError || !available || phase !== 'writing') return
     const text = (drafts[columnIndex] ?? '').trim()
     if (!text || text.length > 2000) {
       setErrors((current) => ({ ...current, [columnIndex]: 'Write 1–2000 characters before saving.' }))
@@ -119,8 +122,9 @@ export function WritingBoard({ session, columns, phase }: {
 
   return <section aria-label="Private writing">
     <div className={styles.panel}>
-      <h2>Your private writing space</h2>
-      <p>Only you can see your saved cards during writing. Other participants and the facilitator cannot read them yet.</p>
+      <h2>{phase === 'writing' ? 'Your private writing space' : 'Your unsent writing'}</h2>
+      {phase === 'writing' ? <p>Only you can see your saved cards during writing. Other participants and the facilitator cannot read them yet.</p> :
+        <p>Writing has ended. These drafts and unsaved edits were not shared. Copy anything you want to keep before leaving.</p>}
       <p className={styles.hint}>Avoid passwords, secrets, personal data, or confidential company information.</p>
       <p className={styles.hint}>Unsent drafts stay only on this page and are lost when you reload or leave.</p>
       <button type="button" className={styles.secondary} disabled={loading || pending !== null || activeCard !== null} onClick={() => {
@@ -128,7 +132,7 @@ export function WritingBoard({ session, columns, phase }: {
       }}>Refresh my cards</button>
       <p role="status">{loading ? 'Loading your saved cards…' : notice}</p>
       {loadError && <p className={styles.error} role="alert">{loadError}</p>}
-      {locked && <p className={styles.notice}>Writing is unavailable. Your drafts remain below so you can copy them before leaving or reloading.</p>}
+      {(locked || phase !== 'writing' || !available) && <p className={styles.notice}>Writing is unavailable. Your drafts remain below so you can copy them before leaving or reloading.</p>}
     </div>
     <section className={styles.board} aria-label="Retrospective columns">
       {columns.map((name, index) => <section key={index} className={styles.boardColumn} aria-labelledby={`column-heading-${index}`}>
@@ -138,7 +142,8 @@ export function WritingBoard({ session, columns, phase }: {
           <ul className={styles.cardList} aria-label={`Your cards in column ${index + 1}`}>
             {cards.filter((card) => card.columnIndex === index).map((card) => <li key={card.id} className={styles.card}>
               <SavedCard card={card} session={session} columnCount={columns.length}
-                disabled={locked || loading || pending !== null || cardBusy || (activeCard !== null && activeCard !== card.id)}
+                ended={phase !== 'writing'}
+                disabled={locked || !available || phase !== 'writing' || loading || pending !== null || cardBusy || (activeCard !== null && activeCard !== card.id)}
                 onActive={(active) => setActiveCard(active ? card.id : null)}
                 onBusy={(value) => { busy.current = value; setCardBusy(value) }}
                 onAccessLost={() => setLocked(true)}
@@ -157,7 +162,7 @@ export function WritingBoard({ session, columns, phase }: {
               setErrors((current) => ({ ...current, [index]: '' })); setNotice('') }} />
           <p id={`draft-hint-${index}`} className={styles.hint}>{(drafts[index] ?? '').length}/2000 characters</p>
           {errors[index] && <p id={`draft-error-${index}`} className={styles.error} role="alert">{errors[index]}</p>}
-          <button type="submit" className={styles.primary} disabled={pending !== null || activeCard !== null || loading || locked || !!loadError}>
+          <button type="submit" className={styles.primary} disabled={pending !== null || activeCard !== null || loading || locked || !!loadError || !available || phase !== 'writing'}>
             {pending === index ? 'Saving…' : `Save card in column ${index + 1}`}
           </button>
         </form>

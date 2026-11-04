@@ -14,6 +14,7 @@ services:
       - ./apps/api/tests:/app/apps/api/tests:ro
       - ./apps/api/migrations:/app/apps/api/migrations:ro
       - ./apps/web/src:/app/apps/web/src:ro
+      - ./apps/web/tests:/app/apps/web/tests:ro
       - ./apps/web/index.html:/app/apps/web/index.html:ro
       - ./apps/web/vite.config.ts:/app/apps/web/vite.config.ts:ro
 

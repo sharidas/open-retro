@@ -185,9 +185,25 @@ after the phase transition commits.
 
 The room page displays a read-only shared board after it loads revealed/closed
 metadata. Shared cards render as text with manual refresh and error/loading
-states. Open writing tabs do not automatically change yet: reload them to view
-the revealed board, saving unsent drafts elsewhere first. A facilitator reveal
-button and bounded polling are task 11; no reopening endpoint exists.
+states. The facilitator view now offers a cancelable confirmation before issuing
+reveal. An interrupted or conflicting reveal triggers a metadata status check,
+not an automatic POST retry. No reopening endpoint exists.
+
+Visible room pages poll the existing authenticated metadata endpoint every 10
+seconds after the previous request finishes. Participant registration is used
+only when initially needed, not on background authentication failure. Requests
+time out at 15 seconds. Hidden tabs perform their initial load, pause recurring
+checks, and refresh on visibility return. Leaving the page aborts outstanding
+requests and removes timers/listeners. Transient failures back off to 20, 40,
+then 60 seconds, retaining the latest room while disabling writes. A successful
+check clears the error; 401/404/409 terminal responses stop polling until an
+explicit status check or reopening. Older responses cannot regress room phases.
+
+On automatic reveal, a mounted writing board preserves unsent drafts and open
+edits in a private recovery section instead of unmounting them. Saving stops
+immediately and saved private cards are not duplicated in this section. Only
+the submitted card contents appear on the shared board. Initial revealed-room
+visits do not mount a writing board or load its private recovery state.
 
 ## Errors and Privacy
 

@@ -19,6 +19,9 @@ pause for a demo and feedback before starting the next milestone.
 
 ## Commit and Push Checkpoints
 
+- Use `feat/`, `fix/`, or `docs/` feature branch prefixes, without `codex/`.
+  Create the branch before implementation and report its name with commit details.
+
 - Commit after each completed task when its focused checks pass and the changes
   form one understandable unit. A planning-only update can be its own commit.
 - Before recommending a commit, review the diff and working tree for unrelated
@@ -211,11 +214,19 @@ Demo: use two browser sessions to demonstrate private writing and ownership.
   build, and a live privacy/reveal check passed. Browser checks confirmed shared
   cards, no edit/write controls, manual refresh, and reload persistence. The
   reveal button and polling remain task 11; task 08's mobile check is still pending.
-- [ ] **11 — Add reveal controls and polling.** Show facilitator controls and
+- [x] **11 — Add reveal controls and polling.** Show facilitator controls and
   refresh board state at a bounded interval. Handle stale tabs, failures, and
   stop polling after leaving the room.
   Done when all open sessions see reveal without manually reloading.
   Learn: synchronization and stale client state.
+  Completed with cancelable reveal confirmation and visible-view metadata
+  polling every 10 seconds. Hidden views pause, transient failures back off,
+  terminal failures stop, and unmount cancels work. Phase acceptance is monotonic.
+  Private draft/editor state survives reveal in a recovery section with saving
+  disabled. Browser checks verified one facilitator and two origin-isolated
+  participants updating without reload; unsent text remained private and intact.
+  All 135 tests (123 API/domain and 12 frontend), TypeScript checks, production
+  build, and diff checks passed. Task 08's narrow-screen check remains pending.
 
 Demo: reveal once and watch both participant boards update.
 

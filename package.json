@@ -12,7 +12,7 @@
     "dev": "concurrently --kill-others --names api,web 'npm run dev -w @open-retro/api' 'npm run dev -w @open-retro/web'",
     "check": "npm run check --workspaces",
     "build": "npm run build --workspaces",
-    "test": "npm run test -w @open-retro/api"
+    "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

@@ -86,7 +86,7 @@ function App() {
         <CopyLink label="Facilitator link" value={created.facilitatorLink} />
       </div>
       <p className={styles.hint}>Links are kept only on this page. Save them before refreshing. Room expiry: {new Date(created.expiresAt).toLocaleString()} (your local time).</p>
-      <p className={styles.notice}>Open the participant room to write, edit, and delete your own private cards. Reveal controls and voting are coming next.</p>
+      <p className={styles.notice}>Open the participant room to write, edit, and delete your own private cards. Your facilitator can reveal cards when everyone is ready. Voting is coming next.</p>
       <p><a href={created.participantLink}>Open participant room</a> · <a href={created.facilitatorLink}>Open facilitator room</a></p>
       <button type="button" className={styles.secondary} onClick={() => { setCreated(null); setError('') }}>Create another room</button>
     </section> : <section className={styles.panel} aria-labelledby="create-heading">
