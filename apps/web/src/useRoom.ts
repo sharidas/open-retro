@@ -1,7 +1,8 @@
+import { isColumnColor } from './templates'
 import { useCallback, useEffect, useState } from 'react'
 import type { RoomSession } from './session'
 
-export type Room = { id: string; columns: string[]; state: 'writing' | 'revealed' | 'closed'; expiresAt: number }
+export type Room = { id: string; columns: string[]; columnColors?: string[]; state: 'writing' | 'revealed' | 'closed'; expiresAt: number }
 export const POLL_INTERVAL_MS = 10_000
 const ranks = { writing: 0, revealed: 1, closed: 2 }
 export function isRoom(value: unknown, id: string): value is Room {
@@ -9,6 +10,7 @@ export function isRoom(value: unknown, id: string): value is Room {
   const room = value as Record<string, unknown>
   return room.id === id && Array.isArray(room.columns) && room.columns.length >= 1 && room.columns.length <= 5 &&
     room.columns.every((name: unknown) => typeof name === 'string') &&
+    (room.columnColors === undefined || (Array.isArray(room.columnColors) && room.columnColors.length === room.columns.length && room.columnColors.every(isColumnColor))) &&
     (room.state === 'writing' || room.state === 'revealed' || room.state === 'closed') &&
     typeof room.expiresAt === 'number' && Number.isFinite(room.expiresAt)
 }

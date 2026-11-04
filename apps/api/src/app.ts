@@ -5,6 +5,7 @@ import { createFacilitatorSecret, hashSecret, verifyFacilitatorSecret } from './
 import { RoomRuleError, transitionRoom } from './domain/room.js'
 import type { roomRepository } from './storage/rooms.js'
 import type { StoredRoom } from './storage/rooms.js'
+import { COLUMN_COLORS } from './domain/column-colors.js'
 import { VOTE_LIMIT } from './domain/vote.js'
 
 // Keep HTTP routes separate from the Node.js server for future hosting adapters.
@@ -12,7 +13,8 @@ type Rooms = ReturnType<typeof roomRepository>
 type AppEnv = { Variables: { room: StoredRoom; ownerHash: string; facilitatorHash: string } }
 const createRoomInput = z.strictObject({
   columns: z.array(z.string().trim().min(1)).min(1).max(5),
-})
+  columnColors: z.array(z.enum(COLUMN_COLORS)).min(1).max(5).optional(),
+}).refine(value => value.columnColors === undefined || value.columnColors.length === value.columns.length)
 const createCardInput = z.strictObject({
   columnIndex: z.number().int().min(0).max(4),
   text: z.string().trim().min(1).max(2000),
@@ -146,7 +148,7 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
     const parsed = createRoomInput.safeParse(body)
     if (!parsed.success) return c.json({ error: 'INVALID_ROOM', message: 'Provide one to five nonempty column names.' }, 400)
     const { secret, hash } = createFacilitatorSecret()
-    const room = await rooms.create(parsed.data.columns, hash)
+    const room = await rooms.create(parsed.data.columns, hash, parsed.data.columnColors)
     // The one and only response containing the raw facilitator capability.
     return c.json({ room, facilitatorSecret: secret }, 201)
   })

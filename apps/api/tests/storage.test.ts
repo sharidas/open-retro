@@ -35,12 +35,12 @@ describe('SQLite room persistence', () => {
       await old.executeMultiple(await readFile(new URL('../migrations/0001_rooms.sql', import.meta.url), 'utf8'))
       await old.execute('CREATE TABLE schema_migrations (name TEXT PRIMARY KEY NOT NULL)')
       await old.execute("INSERT INTO schema_migrations VALUES ('0001_rooms.sql')")
-      await old.execute(`INSERT INTO rooms VALUES ('legacy', '["A"]', 'writing', 1, 2)`)
+      await old.execute(`INSERT INTO rooms VALUES ('legacy', '["A","B","C","D","E"]', 'writing', 1, 2)`)
     } finally { old.close() }
     const upgraded = await openDatabase(path)
     cleanup.push(upgraded.close)
     const repo = roomRepository(upgraded.db)
-    expect(await repo.find('legacy')).toEqual({ id: 'legacy', columns: ['A'], state: 'writing', createdAt: 1, expiresAt: 2 })
+    expect(await repo.find('legacy')).toEqual({ id: 'legacy', columns: ['A', 'B', 'C', 'D', 'E'], columnColors: ['sage', 'peach', 'blue', 'lavender', 'sand'], state: 'writing', createdAt: 1, expiresAt: 2 })
     expect(await repo.findFacilitatorHash('legacy')).toBeNull()
   })
   it('round-trips normalized columns, writing state, and expiry timestamps', async () => {
@@ -51,13 +51,14 @@ describe('SQLite room persistence', () => {
     expect(await repo.find(room.id)).toEqual({
       id: room.id,
       columns: ['Went well', 'Improve', 'Ideas', 'Questions', 'Thanks'],
+      columnColors: ['sage', 'peach', 'blue', 'lavender', 'sand'],
       state: 'writing', createdAt: now, expiresAt: now + ROOM_LIFETIME_MS,
     })
   })
 
   it('preserves rooms across connection restarts and applies migrations once', async () => {
     const first = await fixture()
-    const room = await roomRepository(first.db).create(['A'])
+    const room = await roomRepository(first.db).create(['A'], null, ['lavender'])
     first.close()
     const second = await openDatabase(first.path)
     cleanup.push(second.close)
@@ -68,6 +69,7 @@ describe('SQLite room persistence', () => {
       { name: '0003_participants.sql' },
       { name: '0004_cards.sql' },
       { name: '0005_votes.sql' },
+      { name: '0006_column_colors.sql' },
     ])
   })
 

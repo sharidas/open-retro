@@ -1,3 +1,4 @@
+import { columnStyle } from './templates'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { RoomSession } from './session'
 import styles from './App.module.css'
@@ -5,8 +6,8 @@ import { isCard, type Card } from './card'
 import { SavedCard } from './SavedCard'
 
 
-export function WritingBoard({ session, columns, phase, available = true, onLocalWork }: {
-  session: RoomSession; columns: string[]; phase: 'writing' | 'revealed' | 'closed'; available?: boolean; onLocalWork?: (present: boolean) => void
+export function WritingBoard({ session, columns, columnColors, phase, available = true, onLocalWork }: {
+  session: RoomSession; columns: string[]; columnColors?: string[]; phase: 'writing' | 'revealed' | 'closed'; available?: boolean; onLocalWork?: (present: boolean) => void
 }) {
   const [cards, setCards] = useState<Card[]>([])
   const [drafts, setDrafts] = useState<Record<number, string>>({})
@@ -135,7 +136,7 @@ export function WritingBoard({ session, columns, phase, available = true, onLoca
       {(locked || phase !== 'writing' || !available) && <p className={styles.notice}>Writing is unavailable. Your drafts remain below so you can copy them before leaving or reloading.</p>}
     </div>
     <section className={styles.board} aria-label="Retrospective columns">
-      {columns.map((name, index) => <section key={index} className={styles.boardColumn} aria-labelledby={`column-heading-${index}`}>
+      {columns.map((name, index) => <section key={index} className={styles.boardColumn} style={columnStyle(columnColors?.[index], index)} aria-labelledby={`column-heading-${index}`}>
         <h2 id={`column-heading-${index}`}>{name}</h2>
         {!loading && !loadError && <>
           {cards.filter((card) => card.columnIndex === index).length === 0 && <p className={styles.hint}>No saved cards here yet.</p>}
