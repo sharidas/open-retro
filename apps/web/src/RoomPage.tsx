@@ -4,6 +4,7 @@ import { CopyLink } from './CopyLink'
 import styles from './App.module.css'
 import { WritingBoard } from './WritingBoard'
 import { SharedBoard } from './SharedBoard'
+import { CloseControl } from './CloseControl'
 import { RevealControl } from './RevealControl'
 import { useRoom } from './useRoom'
 
@@ -35,6 +36,8 @@ export function RoomPage({ session }: { session: RoomSession }) {
           <p className={styles.notice}>Write, edit, or delete your own cards below. The room will update when your facilitator reveals it.</p>}
       </>}
     </section>
+    {room?.state === 'revealed' && session.role === 'facilitator' &&
+      <CloseControl session={session} disabled={!available} onClosed={acceptRoom} onRefresh={refresh} />}
     {room && room.state !== 'writing' && !terminal && <SharedBoard session={session} columns={room.columns}
       phase={room.state} available={available} onRoomRefresh={refresh} />}
     {room && session.role === 'participant' && (room.state === 'writing' || retainWriting) &&

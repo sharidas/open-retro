@@ -254,10 +254,16 @@ Demo: reveal once and watch both participant boards update.
   final budget/undo, peer totals, ordering, reload, and closed-view checks remain
   pending because the browser tool connection failed. Leave this task unchecked
   until those browser checks are completed.
-- [ ] **14 — Close the room.** Add facilitator-only closure and read-only UI.
+- [x] **14 — Close the room.** Add facilitator-only closure and read-only UI.
   Done when closed rooms reject card mutations and votes, including from stale
   clients, while remaining readable until deletion or expiry.
   Learn: lifecycle completion.
+  Completed with facilitator-only atomic closure, explicit confirmation/cancel,
+  and final read-only cards and votes. All 197 tests (154 API/domain and 43 web),
+  TypeScript compilation, and production build passed. Live browser checks
+  covered writing, reveal, voting, closure, automatic participant updates, and
+  reload persistence. Task 13's remaining budget/peer/order checks and task 08's
+  narrow-screen check remain tracked separately.
 
 Demo: run a complete short retro from creation through discussion and closure.
 

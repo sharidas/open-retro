@@ -64,10 +64,10 @@ export function SharedBoard({ session, columns, phase, available, onRoomRefresh 
       <div className={styles.voteActions}>
         <span className={styles.voteTotal}>{vote ? `${vote.total} ${vote.total === 1 ? 'vote' : 'votes'}` : 'Votes unavailable'}</span>
         {session.role === 'participant' && <button type="button" className={selected ? styles.selectedVote : styles.secondary}
-          aria-label={selected ? 'Remove your vote' : 'Vote for this card'} aria-pressed={selected}
+          aria-label={phase === 'closed' ? (selected ? 'You voted for this card' : 'Voting closed for this card') : selected ? 'Remove your vote' : 'Vote for this card'} aria-pressed={selected}
           aria-describedby={`shared-card-${card.id}`} disabled={disabled}
           onClick={() => void voting.changeVote(card.id)}>
-          {voting.pendingCard === card.id ? 'Updating vote…' : selected ? 'Voted · Remove' : 'Vote'}
+          {phase === 'closed' ? (selected ? 'Voted' : 'Voting closed') : voting.pendingCard === card.id ? 'Updating vote…' : selected ? 'Voted · Remove' : 'Vote'}
         </button>}
       </div>
     </li>
@@ -80,9 +80,9 @@ export function SharedBoard({ session, columns, phase, available, onRoomRefresh 
       {phase === 'closed' ? <p className={styles.notice}>Voting is closed. Final totals are read-only.</p> :
         <p className={styles.hint}>Vote for the topics you want to discuss, then switch to “Most voted” to prioritize the conversation.</p>}
       {session.role === 'participant' && snapshot && <p role="status" className={styles.voteBudget}>
-        {snapshot.remainingVotes} of {snapshot.voteLimit} votes remaining
+        {snapshot.remainingVotes} of {snapshot.voteLimit} votes {phase === 'closed' ? 'unused at closure' : 'remaining'}
       </p>}
-      {session.role === 'participant' ? <p className={styles.hint}>At most one vote per card. Remove one of your votes to use it elsewhere. Your selections are visible only to you.</p> :
+      {session.role === 'participant' ? <p className={styles.hint}>{phase === 'closed' ? 'Your final selections are visible only to you and can no longer be changed.' : 'At most one vote per card. Remove one of your votes to use it elsewhere. Your selections are visible only to you.'}</p> :
         <p className={styles.hint}>You see totals only. Use the participant link separately if you would like to vote.</p>}
       <div className={styles.cardActions}>
         <button type="button" className={styles.secondary} disabled={loading || voting.pendingCard !== null}

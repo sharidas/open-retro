@@ -8,7 +8,8 @@ configured columns and receive separate participant and facilitator links.
 Participants can join anonymously and facilitators can open their private room
 view. Participants can write, edit, delete, and reload their own private cards.
 Facilitators can reveal cards and open room views update automatically. Participants can vote after reveal, see their remaining votes and shared totals,
-and switch to a most-voted discussion view.
+and switch to a most-voted discussion view. Facilitators can close the room to
+freeze voting while keeping the final board readable.
 
 ## Run Locally With Docker
 
@@ -114,8 +115,8 @@ the stripped address does not grant access in a fresh tab. If session storage
 is blocked, access lasts only for the current page and a warning is displayed.
 Facilitator access does not create a participant session automatically. Both
 views show configured columns, phase, expiry, and a safe participant share link.
-Participants can now write and view their own saved cards in the room. Facilitator
-management controls are still later tasks.
+Participants can write and view their own saved cards in the room. Facilitators
+can reveal cards and close the retrospective; deletion remains a later task.
 
 ## Private Writing Board
 
@@ -214,8 +215,8 @@ change and its returned snapshot run in a single local SQLite write transaction.
 The room model accepts one to five nonempty column names, trims surrounding
 whitespace, preserves column order, and starts in the writing phase. The allowed
 sequence is `writing → revealed → closed`; skipping, reopening, and repeating
-transitions fail. Creation validates these column rules on the server; lifecycle
-mutation endpoints will be added in later tasks. Column names/order are
+transitions fail. Creation validates these column rules on the server. Reveal and closure are
+protected facilitator actions. Column names/order are
 fixed at creation for the MVP. Duplicate names are currently allowed.
 
 Development runs locally. The public deployment must stay within a $0 budget:
@@ -277,3 +278,13 @@ See:
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Closing a Retrospective
+
+After reveal, the facilitator can choose **Close room**, then **Confirm close**.
+**Keep discussing** cancels without changing the room. Closure cannot be undone:
+voting stops, new participants cannot join, and existing participants and the
+facilitator retain read access to cards and final totals until expiry or deletion.
+Open participant views detect closure automatically; the server also rejects
+writes from stale tabs immediately. Network failures trigger a room-status check
+instead of automatically repeating the close request.

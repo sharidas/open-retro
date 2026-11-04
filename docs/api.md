@@ -50,7 +50,7 @@ expired room returns HTTP 404. Rooms created before migration 0002 have no
 facilitator capability and cannot pass this check; create a new room instead.
 
 This protected metadata read establishes the access boundary. Reveal is now
-supported below; close and room deletion remain later tasks. Participant
+supported below, as is closure; room deletion remains a later task. Participant
 joining now has separate endpoints below. The form generates separate participant and
 facilitator links. Only the latter contains a secret, encoded in its URL
 fragment. The facilitator route consumes this fragment, removes it from the
@@ -265,3 +265,17 @@ same policy; transport HTTPS must be configured for a public deployment.
 
 Rate limiting and broader abuse protection remain task 16. This API is currently
 for local development, not a public deployment.
+
+## Close Room
+
+`POST /api/rooms/:id/close` requires the room's facilitator bearer secret and no
+request body. Only `revealed → closed` is allowed. HTTP 200 returns `{ room }`
+with public fields only. Missing, incorrect, participant, or other-room secrets
+return 401; an authenticated expired room returns 404. Writing/already-closed
+rooms return 409 `INVALID_TRANSITION`. If phase, expiry, or capability changes
+after authorization, the atomic update returns 409 `ROOM_CHANGED`.
+
+Exactly one concurrent close succeeds. Closed rooms reject card mutations and
+vote additions/removals, including requests from stale clients. Existing members
+can still read cards and final votes; new joins are rejected. Closure preserves
+the original expiry and does not delete data or permit reopening.
