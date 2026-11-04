@@ -7,7 +7,8 @@ The project is in early development. You can create a room with one to five
 configured columns and receive separate participant and facilitator links.
 Participants can join anonymously and facilitators can open their private room
 view. Participants can write, edit, delete, and reload their own private cards.
-Reveal controls and voting are not implemented yet.
+Facilitators can reveal cards and open room views update automatically. Voting
+is not implemented yet.
 
 ## Run Locally With Docker
 
@@ -39,8 +40,10 @@ docker compose exec dev npm test
 docker compose exec dev npm run build
 ```
 
-`check` validates TypeScript, including the API tests; `test` runs the room-rule and database
-tests once using Vitest; `build` compiles the API and bundles the frontend.
+`check` validates TypeScript, including API and frontend tests; `test` runs the
+API/domain/storage and frontend polling tests once using Vitest. Frontend tests
+use jsdom to check browser state without launching a browser. `build` compiles
+the API and bundles the frontend.
 Neither installs anything on your machine. Container dependencies and build
 outputs stay inside the container.
 
@@ -135,8 +138,12 @@ permits both operations only for the owner while the room is unexpired and in
 the writing phase. Refresh is disabled while editing or confirming deletion so
 unsaved edits are not discarded. Failed edits preserve the editor text; after
 an interrupted request, cancel and refresh saved cards to check the result.
-Facilitator reveal is available through the API, with a read-only shared board
-shown after reload. The reveal button and automatic updates are task 11.
+Facilitators can select “Reveal cards”, review the warning, and confirm or keep
+writing. Confirmed reveal ends writing and opens the read-only shared board.
+Visible participant views update automatically without reloading. Unsent drafts
+and open edits stay on the page under “Your unsent writing — not shared”, with
+saving disabled so you can copy them before leaving. Empty recovery sections
+are hidden. These drafts are never submitted automatically.
 Narrow-screen verification remains pending from task 08.
 
 ## Private Card API
@@ -154,7 +161,7 @@ all anonymous cards after reveal. Participants use the separate authenticated
 endpoint remains owner-only to keep stale writing screens safe.
 See the [API notes](docs/api.md) for validation and privacy behavior.
 
-## Reveal Through the API
+## Reveal and Room Updates
 
 `POST /api/rooms/:id/reveal` with `Authorization: Bearer <facilitator-secret>`
 ends writing and reveals the room's cards together. It requires no request body.
@@ -162,11 +169,18 @@ Only the correct room's facilitator can reveal; repeated reveals return 409.
 Expired rooms cannot be revealed. Card creation, editing, and deletion are
 rejected after reveal, including requests from stale tabs.
 
-Reload a participant or facilitator room page after reveal to view all cards
-without author labels, ownership hashes, or submission timestamps. The shared
-board has manual refresh and no mutation controls. The facilitator reveal button
-and polling across open tabs are intentionally left for task 11. Copy any unsent
-drafts before reloading; they are held only in page memory.
+The shared board shows cards without author labels, ownership hashes, or
+submission timestamps, with manual card refresh and no mutation controls.
+Room metadata refreshes every 10 seconds after a completed request while the
+page is visible. Hidden tabs load once, pause recurring checks, and check again
+when visible. Leaving the view cancels requests and timers.
+
+Transient failures retain the last room and unsent text, pause saving, and retry
+after 20, 40, then at most 60 seconds. “Check room status” retries immediately.
+Authorization failures and unavailable rooms stop automatic checks. Requests
+time out after 15 seconds and do not overlap. Reveal requests are not retried
+automatically; an interrupted request triggers a status check instead. A stale
+writing response cannot undo a confirmed revealed or closed phase.
 
 The room model accepts one to five nonempty column names, trims surrounding
 whitespace, preserves column order, and starts in the writing phase. The allowed

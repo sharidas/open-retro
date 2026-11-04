@@ -4,11 +4,11 @@ import type { RoomSession } from './session'
 import styles from './App.module.css'
 
 type Props = {
-  card: Card; session: RoomSession; columnCount: number; disabled: boolean;
+  card: Card; session: RoomSession; columnCount: number; disabled: boolean; ended?: boolean;
   onActive: (active: boolean) => void; onBusy: (busy: boolean) => void;
   onAccessLost: () => void; onUpdated: (card: Card) => void; onDeleted: () => void;
 }
-export function SavedCard({ card, session, columnCount, disabled, onActive, onBusy, onAccessLost, onUpdated, onDeleted }: Props) {
+export function SavedCard({ card, session, columnCount, disabled, ended = false, onActive, onBusy, onAccessLost, onUpdated, onDeleted }: Props) {
   const [mode, setMode] = useState<'view' | 'edit' | 'delete'>('view')
   const [text, setText] = useState(card.text)
   const [pending, setPending] = useState(false)
@@ -88,6 +88,7 @@ export function SavedCard({ card, session, columnCount, disabled, onActive, onBu
     }
   }
 
+  if (ended && mode === 'view') return null
   return <>
     {mode === 'edit' ? <form onSubmit={(event) => void change(event)} noValidate>
       <label className={styles.draftLabel} htmlFor={`edit-${card.id}`}>Edit card text</label>

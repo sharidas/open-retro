@@ -1,6 +1,24 @@
 {
-  "name": "@open-retro/web", "private": true, "type": "module",
-  "scripts": {"dev": "vite --host 0.0.0.0", "check": "tsc --noEmit", "build": "tsc --noEmit && vite build"},
-  "dependencies": {"react": "^19.2.0", "react-dom": "^19.2.0"},
-  "devDependencies": {"vite": "^7.2.0", "@vitejs/plugin-react": "^5.1.0", "@types/react": "^19.2.0", "@types/react-dom": "^19.2.0", "@types/node": "^24.0.0"}
+  "name": "@open-retro/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "check": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run --environment jsdom"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "jsdom": "^30.1.3",
+    "vite": "^7.2.0",
+    "vitest": "^5.1.0"
+  }
 }

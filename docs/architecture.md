@@ -133,8 +133,24 @@ Shared card queries independently constrain room, expiry, and revealed/closed
 state, projecting only card ID, column index, and text. Stable random card IDs
 provide ordering without author grouping or writing timestamps. No migration
 was needed. The room page selects a read-only shared board from room metadata;
-stale writing views continue to use owner-only reads. Reveal controls and live
-phase synchronization remain task 11.
+stale writing views continue to use owner-only reads.
+
+`useRoom` owns metadata loading, initial participant registration, and one
+non-overlapping polling loop per visible view. It uses a 10-second interval,
+15-second request timeout, and bounded exponential backoff (20/40/60 seconds).
+Hidden pages load once but pause recurring requests; visibility return checks
+immediately. Cleanup aborts in-flight work and clears timers/listeners. Terminal
+authentication/availability errors stop polling, and transient errors retain
+room state while disabling mutations. Monotonic phase acceptance prevents a
+stale writing response from undoing a confirmed reveal.
+
+`RevealControl` confirms the irreversible transition and sends one guarded POST.
+Success updates local room state immediately; uncertain/conflicting results
+request metadata instead of replaying the mutation. Polling carries that phase
+to other visible views. The writing board remains mounted across a phase change
+when it was already open, preserving draft/editor state for copying. Its recovery
+section is private and hidden if empty; submissions and mutation controls stop.
+Shared cards use their own endpoint and component, with no ownership metadata.
 
 - Facilitator access and participant access must use separate secrets.
 - Participant identifiers must not be exposed in facilitator responses.
