@@ -1,3 +1,4 @@
+import { columnStyle } from './templates'
 import { useEffect, useState } from 'react'
 import { isCard, type Card } from './card'
 import type { RoomSession } from './session'
@@ -5,8 +6,8 @@ import { useVoting } from './useVoting'
 import { discussionOrder } from './voting'
 import styles from './App.module.css'
 
-export function SharedBoard({ session, columns, phase, available, onRoomRefresh }: {
-  session: RoomSession; columns: string[]; phase: 'revealed' | 'closed'; available: boolean; onRoomRefresh: () => void
+export function SharedBoard({ session, columns, columnColors, phase, available, onRoomRefresh }: {
+  session: RoomSession; columns: string[]; columnColors?: string[]; phase: 'revealed' | 'closed'; available: boolean; onRoomRefresh: () => void
 }) {
   const [cards, setCards] = useState<Card[]>([])
   const [loading, setLoading] = useState(true)
@@ -110,7 +111,7 @@ export function SharedBoard({ session, columns, phase, available, onRoomRefresh 
         {discussionOrder(cards, snapshot?.votes ?? []).map((card, index) => renderCard(card, index + 1))}
       </ol>
     </section> : <section className={styles.board} aria-label="Revealed retrospective columns">
-      {columns.map((name, index) => <section key={index} className={styles.boardColumn} aria-labelledby={`shared-column-${index}`}>
+      {columns.map((name, index) => <section key={index} className={styles.boardColumn} style={columnStyle(columnColors?.[index], index)} aria-labelledby={`shared-column-${index}`}>
         <h2 id={`shared-column-${index}`}>{name}</h2>
         {cards.filter((card) => card.columnIndex === index).length === 0 && <p className={styles.hint}>No cards in this column.</p>}
         <ul className={styles.cardList} aria-label={`Revealed cards in column ${index + 1}`}>

@@ -41,7 +41,7 @@ describe('room creation API', () => {
     expect(response.headers.get('Cache-Control')).toBe('no-store')
     const body = await response.json()
     expect(Object.keys(body).sort()).toEqual(['facilitatorSecret', 'room'])
-    expect(Object.keys(body.room).sort()).toEqual(['columns', 'createdAt', 'expiresAt', 'id', 'state'])
+    expect(Object.keys(body.room).sort()).toEqual(['columnColors', 'columns', 'createdAt', 'expiresAt', 'id', 'state'])
     expect(body.room.columns).toEqual(['Went well', 'Improve'])
     expect(body.room.state).toBe('writing')
     expect(body.room.id).toMatch(/^[0-9a-f-]{36}$/)
@@ -143,4 +143,28 @@ describe('facilitator authorization', () => {
     expect(verifyFacilitatorSecret('x'.repeat(43), 'not-a-hash')).toBe(false)
     expect(verifyFacilitatorSecret('short', 'a'.repeat(64))).toBe(false)
   })
+})
+
+ it('persists chosen colours through reads and lifecycle transitions', async () => {
+  const f = await fixture()
+  const response = await f.create({ columns: ['Start', 'Stop', 'Continue'], columnColors: ['blue', 'peach', 'sage'] })
+  expect(response.status).toBe(201)
+  const { room, facilitatorSecret } = await response.json()
+  expect(room.columnColors).toEqual(['blue', 'peach', 'sage'])
+  expect((await (await f.access(room.id, facilitatorSecret)).json()).room.columnColors).toEqual(room.columnColors)
+  for (const action of ['reveal', 'close']) {
+    const response = await f.app.request(`/api/rooms/${room.id}/${action}`, { method: 'POST', headers: { Authorization: `Bearer ${facilitatorSecret}` } })
+    expect(response.status).toBe(200)
+    expect((await response.json()).room.columnColors).toEqual(room.columnColors)
+  }
+})
+it.each([[], ['sage', 'blue'], ['unknown'], ['#ffffff'], [null], 'sage', null])('rejects invalid colour configuration: %j', async columnColors => {
+  const f = await fixture()
+  expect((await f.create({ columns: ['A'], columnColors })).status).toBe(400)
+  expect(await f.db.all(sql`SELECT id FROM rooms`)).toEqual([])
+})
+it('uses deterministic defaults for clients that omit colours', async () => {
+  const f = await fixture()
+  const { room } = await (await f.create()).json()
+  expect(room.columnColors).toEqual(['sage', 'peach'])
 })

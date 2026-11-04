@@ -312,11 +312,14 @@ existing anonymous access rules and maximum of five columns.
   compact phase toolbar, and expandable Invite team / Room details. Keep access
   failures and storage warnings visible. Use pastel column backgrounds, light
   cards, compact facilitator controls, and a single-column narrow-screen layout.
-  Colours are currently decorative defaults, not saved room settings.
-- [ ] **Column colours and templates.** Offer Classic (Went well / Could improve /
+  Initial colours were decorative defaults; the next chunk persists them.
+- [x] **Column colours and templates.** Offer Classic (Went well / Could improve /
   Next steps), Start–Stop–Continue, Mad–Sad–Glad, and 4Ls (Liked / Learned / Lacked /
   Longed for), plus Start from scratch. Preview templates and allow column names,
   accessible palette colours, and column count to be changed before creation.
+  Implemented with saved palette keys, migration 0006 for existing rooms, and
+  shared rendering in participant/facilitator views. 213 tests, type checks,
+  production build, and desktop template/customisation browser checks passed.
 - [ ] **Optional mood check-in.** Add a pre-writing check-in with five labelled
   emoji choices, one changeable answer per participant, and anonymous aggregate
   results revealed when writing starts. Do not link moods to cards.

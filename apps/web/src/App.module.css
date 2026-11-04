@@ -117,3 +117,17 @@
   .workspace .board { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { .workspace button { transition: none; } }
+
+.templateGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.templateCard { text-align: left; padding: 18px; border: 1px solid #bccbc0; border-radius: 12px; background: #fffefa; color: #203b33; }
+.templateCard > strong { display: block; font-size: 1rem; }
+.templateCard > span { display: block; margin-top: 8px; font-size: .8rem; line-height: 1.5; }
+.templateCard[aria-pressed="true"] { outline: 2px solid #245c48; outline-offset: -2px; background: #f4f8f0; }
+.templateCard > .templatePreview { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 16px; }
+.templatePreview > span { flex: 1 1 48px; padding: 8px 5px; border-radius: 5px; background: var(--column-tint); border-top: 2px solid var(--column-accent); font-size: .7rem; }
+.scratchButton { color: #245c48; background: transparent; border: 0; padding: 12px 0; margin-top: 8px; text-decoration: underline; }
+.scratchButton[aria-pressed="true"] { font-weight: 700; }
+.colorField label { display: block; font-size: .875rem; font-weight: 600; }
+.colorField select { font: inherit; margin-top: 8px; padding: 12px 8px; color: #203b33; background: var(--column-tint); border: 1px solid var(--column-accent); border-radius: 8px; }
+:global(select:focus-visible) { outline: 3px solid #976513; outline-offset: 4px; }
+@media (max-width: 540px) { .templateGrid { grid-template-columns: 1fr; } .colorField select { max-width: 100px; } }

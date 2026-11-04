@@ -1,3 +1,4 @@
+import { columnColors } from '../domain/column-colors.js'
 import { randomUUID } from 'node:crypto'
 import { and, eq, gt } from 'drizzle-orm'
 import { createRoom } from '../domain/room.js'
@@ -9,7 +10,7 @@ import { voteRepository } from './votes.js'
 export const ROOM_LIFETIME_MS = 24 * 60 * 60 * 1000
 // Explicit projection prevents facilitator hashes from leaking through reads.
 const publicFields = {
-  id: rooms.id, columns: rooms.columns, state: rooms.state,
+  id: rooms.id, columns: rooms.columns, columnColors: rooms.columnColors, state: rooms.state,
   createdAt: rooms.createdAt, expiresAt: rooms.expiresAt,
 }
 export type StoredRoom = Omit<typeof rooms.$inferSelect, 'facilitatorSecretHash'>
@@ -41,11 +42,12 @@ export function roomRepository(db: Database, clock: () => number = Date.now) {
         .where(and(eq(participants.roomId, roomId), eq(participants.tokenHash, tokenHash))).limit(1)
       return records.length === 1
     },
-    async create(columns: unknown, facilitatorSecretHash: string | null = null): Promise<StoredRoom> {
+    async create(columns: unknown, facilitatorSecretHash: string | null = null, colors?: unknown): Promise<StoredRoom> {
       const room = createRoom(columns)
       const createdAt = clock()
       const saved: StoredRoom = {
         ...room,
+        columnColors: columnColors(colors, room.columns.length),
         id: randomUUID(),
         createdAt,
         expiresAt: createdAt + ROOM_LIFETIME_MS,

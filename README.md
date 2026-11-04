@@ -88,7 +88,7 @@ creation; timestamps are Unix milliseconds. The creation API stores a separate
 facilitator secret hash; ordinary storage reads exclude it. General expiry
 enforcement and cleanup are task 15; the storage lookup currently returns expired
 records too. The protected facilitator endpoint already denies expired rooms.
-The creation form starts with three editable suggestions. Add/remove columns
+The creation form starts with the Classic retro template. Add/remove columns
 within the one-to-five limit, then submit to save the room. Blank names show
 inline errors; API failures preserve your input. While saving, controls are
 disabled to prevent duplicate submissions. Failed requests are not retried
@@ -294,5 +294,19 @@ instead of automatically repeating the close request.
 Room pages use a wide board with a compact phase toolbar. **Invite team** reveals
 the participant share link; **Room details** contains expiry and session guidance.
 Access failures and storage warnings remain visible outside these disclosures.
-Pastel columns and light cards help separate topics. Current colours are visual
-defaults; configurable palettes and four creation templates are the next chunk.
+Pastel columns and light cards help separate topics. Choose from four template previews or start from scratch. Before creation, edit
+column names and choose Sage, Peach, Blue, Lavender, or Sand for each column.
+The room saves these choices for both participants and the facilitator.
+
+### Retro Templates
+
+| Template | Columns |
+| --- | --- |
+| Classic retro | Went well · Could improve · Next steps |
+| Start, Stop, Continue | Start · Stop · Continue |
+| Mad, Sad, Glad | Mad · Sad · Glad |
+| 4Ls | Liked · Learned · Lacked · Longed for |
+
+Selecting a template replaces the current draft configuration. Customise it
+before creating the room, keeping between one and five columns. Existing rooms
+receive the previous default pastel colours automatically during migration.

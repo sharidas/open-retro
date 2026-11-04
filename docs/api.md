@@ -11,7 +11,7 @@ curl -i http://localhost:5173/api/rooms \
   -d '{"columns":["Went well","Could improve","Ideas"]}'
 ```
 
-`POST /api/rooms` accepts only a JSON object containing `columns`: one to five
+`POST /api/rooms` accepts a JSON object containing `columns`: one to five
 nonempty strings. Names are trimmed and order is preserved. Unknown fields are
 rejected, including attempts to choose a room ID, phase, or facilitator secret.
 The request body is limited to 8 KiB. Duplicate column names remain allowed.
@@ -23,6 +23,7 @@ Success returns HTTP 201:
   "room": {
     "id": "generated-room-uuid",
     "columns": ["Went well", "Could improve", "Ideas"],
+    "columnColors": ["sage", "peach", "blue"],
     "state": "writing",
     "createdAt": 1800000000000,
     "expiresAt": 1800086400000
@@ -279,3 +280,15 @@ Exactly one concurrent close succeeds. Closed rooms reject card mutations and
 vote additions/removals, including requests from stale clients. Existing members
 can still read cards and final votes; new joins are rejected. Closure preserves
 the original expiry and does not delete data or permit reopening.
+
+## Column Colours and Templates
+
+Creation also accepts optional `columnColors`, an array with exactly one entry
+per column. Allowed values: `sage`, `peach`, `blue`, `lavender`, `sand`. Unknown
+colours, null, and mismatched lengths return 400 without creating a room. Omitting
+colours assigns those defaults in column order. Room metadata includes
+`columnColors` on creation, authenticated reads, reveal, and closure.
+
+Templates are client-side presets for column names and colours. The API stores
+only the final configuration, not a template ID. Names, order, and colours stay
+fixed after creation. Arbitrary CSS values are not accepted.

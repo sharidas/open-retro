@@ -1,3 +1,4 @@
+import { columnStyle } from './templates'
 import { useEffect, useState } from 'react'
 import type { RoomSession } from './session'
 import { CopyLink } from './CopyLink'
@@ -48,16 +49,16 @@ export function RoomPage({ session }: { session: RoomSession }) {
     </>}
     {room?.state === 'revealed' && session.role === 'facilitator' &&
       <CloseControl session={session} disabled={!available} onClosed={acceptRoom} onRefresh={refresh} />}
-    {room && room.state !== 'writing' && !terminal && <SharedBoard session={session} columns={room.columns}
+    {room && room.state !== 'writing' && !terminal && <SharedBoard session={session} columns={room.columns} columnColors={room.columnColors}
       phase={room.state} available={available} onRoomRefresh={refresh} />}
     {room && session.role === 'participant' && (room.state === 'writing' || retainWriting) &&
       <div className={styles.writingRecovery} hidden={room.state !== 'writing' && !hasUnsentWriting}>
-        <WritingBoard session={session} columns={room.columns} phase={room.state} available={available} onLocalWork={setHasUnsentWriting} />
+        <WritingBoard session={session} columns={room.columns} columnColors={room.columnColors} phase={room.state} available={available} onLocalWork={setHasUnsentWriting} />
       </div>}
     {room && room.state === 'writing' && session.role === 'facilitator' && <>
       <RevealControl session={session} disabled={!available} onRevealed={acceptRoom} onRefresh={refresh} />
       <section className={styles.board} aria-label="Retrospective columns">
-        {room.columns.map((name, index) => <section key={index} className={styles.boardColumn} aria-label={`Column ${index + 1}: ${name}`}>
+        {room.columns.map((name, index) => <section key={index} className={styles.boardColumn} style={columnStyle(room.columnColors?.[index], index)} aria-label={`Column ${index + 1}: ${name}`}>
           <h2>{name}</h2><p className={styles.hint}>Participant cards stay hidden during writing.</p>
         </section>)}
       </section>

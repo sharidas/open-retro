@@ -213,3 +213,18 @@ times out after 15 seconds, and refreshes metadata after uncertain responses
 without automatically replaying the request. Existing room polling propagates
 closure to participants. The voting view reloads the final snapshot when phase
 changes and disables mutations while preserving selections and discussion views.
+
+## Templates and Column Colours
+
+The creation UI provides four editable presets (Classic, Start/Stop/Continue,
+Mad/Sad/Glad, and 4Ls) plus a blank starting point. Each editor column holds its
+name and colour together, so removing another column cannot detach its colour.
+Submission sends parallel `columns` and `columnColors` arrays. API and repository
+validation require matching lengths and a fixed palette; legacy clients can omit
+colours for deterministic defaults.
+
+Migration 0006 adds JSON column colours and backfills existing rooms in their
+original column order. Authenticated metadata and transition responses project
+these colours alongside names. All writing and shared board views use the same
+allowlisted palette mapping. Templates need no database entity: the room stores
+the customised result. A future template change will not alter existing rooms.
