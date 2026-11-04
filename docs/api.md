@@ -1,7 +1,7 @@
 # Local Room API
 
-The API is available through Vite at `http://localhost:5173/api`. The UI still
-shows the foundation page; the room creation form is task 05.
+The API is available through Vite at `http://localhost:5173/api`. The home page
+contains a room creation form that uses this API.
 
 ## Create a Room
 
@@ -51,7 +51,9 @@ facilitator capability and cannot pass this check; create a new room instead.
 
 This protected metadata read establishes the access boundary. Reveal, close,
 and delete operations are deliberately left for their planned tasks. Participant
-joining and shareable UI links are also later work.
+joining is also later work. The form generates separate participant and
+facilitator links. Only the latter contains a secret, encoded in its URL
+fragment. Both routes currently display a preview notice until task 06.
 
 ## Errors and Privacy
 

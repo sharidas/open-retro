@@ -125,11 +125,18 @@ Demo: open the app, reach the API, and verify that room data persists.
   omit secrets/hashes. All 55 tests, TypeScript checks, production build, and a
   live Vite-to-API creation/authorization check passed. Reveal, close, deletion,
   participant joining, and rate limiting remain their planned tasks.
-- [ ] **05 — Build the creation screen.** Add room creation with editable column
+- [x] **05 — Build the creation screen.** Add room creation with editable column
   names, adding/removing columns up to five, and clear validation messages.
   Done when the UI creates a room and displays separate participant and
   facilitator links, explaining that the facilitator link must stay private.
   Learn: forms, client validation, and server validation.
+  Completed with editable default prompts, add/remove controls for one to five
+  columns, inline blank-name errors, pending/error handling, and separate
+  copyable links. Facilitator secrets use URL fragments; links remain in page
+  memory only. Browser checks passed for column limits, validation, API rejection,
+  five-column creation, link separation, copy feedback, and a narrow-screen
+  layout. TypeScript checks, production build, and all 55 API/domain/storage
+  tests passed. Link destinations show preview notices until task 06.
 - [ ] **06 — Join anonymously.** Add participant and facilitator routes and
   room-scoped participant tokens, storing only token hashes on the server.
   Keep secrets out of ordinary share links, response payloads, and application

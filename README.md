@@ -3,9 +3,9 @@
 Open Retro is a planned free and open-source retrospective tool for teams that
 need anonymous feedback without accounts, tracking, or hidden paywalls.
 
-The project is in early development. The first local development slice provides
-a React page connected to an API health endpoint; retrospective features are
-not implemented yet.
+The project is in early development. You can create a room with one to five
+configured columns and receive separate participant and facilitator links.
+Joining rooms, writing cards, and voting are not implemented yet.
 
 ## Run Locally With Docker
 
@@ -17,8 +17,8 @@ required. Docker downloads the base image and packages on the first build.
 docker compose up --build
 ```
 
-Open [Open Retro locally](http://localhost:5173). The page should display
-“Connected — the server is ready.” Only localhost can access the published port.
+Open [Open Retro locally](http://localhost:5173). The page displays the room
+creation form. Only localhost can access the published port.
 Stop with Ctrl+C, then use `docker compose down` to remove the container.
 
 For background operation, use `docker compose up --build -d` and view output with
@@ -46,8 +46,8 @@ outputs stay inside the container.
 
 - `apps/web`: React and TypeScript UI, served by Vite on port 5173.
 - `apps/api`: Hono API running on Node.js, internally on port 3000.
-- The browser requests `/api/health`; Vite forwards `/api` requests to Hono,
-  which returns JSON. The page displays the result and offers retry on failure.
+- The form sends `POST /api/rooms`; Vite forwards `/api` requests to Hono,
+  which validates the request and saves the room. `/api/health` remains available.
 - npm workspaces manage both applications with one dependency lockfile.
 
 React/Vite provide the interactive UI and fast feedback while editing. Hono
@@ -81,7 +81,18 @@ creation; timestamps are Unix milliseconds. The creation API stores a separate
 facilitator secret hash; ordinary storage reads exclude it. General expiry
 enforcement and cleanup are task 15; the storage lookup currently returns expired
 records too. The protected facilitator endpoint already denies expired rooms.
-The UI is unchanged; the creation screen comes in task 05.
+The creation form starts with three editable suggestions. Add/remove columns
+within the one-to-five limit, then submit to save the room. Blank names show
+inline errors; API failures preserve your input. While saving, controls are
+disabled to prevent duplicate submissions. Failed requests are not retried
+automatically because creation may already have succeeded on the server.
+
+After success, copy the participant link for teammates and save the facilitator
+link privately. The facilitator secret is in a URL fragment (`#secret=...`), not
+the path or query string, so browsers do not send it in HTTP requests. Links are
+kept in page memory only for now; save them before refreshing or creating another
+room. Clipboard failures select the text for manual copying. Generated links
+currently open a preview notice; room views and anonymous joining are task 06.
 
 The room model accepts one to five nonempty column names, trims surrounding
 whitespace, preserves column order, and starts in the writing phase. The allowed

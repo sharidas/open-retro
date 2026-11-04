@@ -1,11 +1,43 @@
 :global(*) { box-sizing: border-box; }
 :global(body) { margin: 0; background: #f5f4ed; color: #203b33; font-family: system-ui, sans-serif; }
-.page { max-width: 860px; margin: auto; padding: clamp(28px, 8vw, 88px) 24px; }
+:global(button), :global(input) { font: inherit; }
+:global(button) { cursor: pointer; }
+:global(button:disabled) { opacity: .5; cursor: default; }
+:global(button:focus-visible), :global(input:focus-visible), :global(a:focus-visible) { outline: 3px solid #976513; outline-offset: 4px; }
+:global(a) { color: #245c48; }
+.page { max-width: 860px; margin: auto; padding: clamp(28px, 6vw, 64px) 24px 24px; }
 .eyebrow { font-size: .75rem; font-weight: 700; letter-spacing: .12em; }
-.page h1 { font-size: clamp(2.3rem, 6vw, 4rem); line-height: 1.1; letter-spacing: -.04em; }
+.page h1 { font-size: clamp(2.3rem, 6vw, 4rem); line-height: 1.1; letter-spacing: -.04em; margin: 24px 0; }
 .intro { max-width: 560px; font-size: 1.15rem; line-height: 1.7; }
-.panel { margin-top: 40px; padding: 24px; border: 1px solid #bccbc0; border-radius: 16px; background: #fffefa; }
-.panel h2 { margin-top: 0; font-size: 1.2rem; }
+.panel { margin-top: 32px; padding: clamp(20px, 4vw, 32px); border: 1px solid #bccbc0; border-radius: 16px; background: #fffefa; }
+.panel h2 { margin: 0; font-size: 1.4rem; letter-spacing: -.02em; }
 .panel p { line-height: 1.6; }
-.panel button { padding: 10px 18px; border: 0; border-radius: 8px; background: #203b33; color: white; font: inherit; cursor: pointer; }
-.panel button:focus-visible { outline: 3px solid #976513; outline-offset: 4px; }
+.sectionHeader { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; align-items: center; }
+.badge { background: #edf3eb; border: 1px solid #cfdecd; padding: 6px 10px; font-size: .75rem; border-radius: 30px; }
+.fieldset { border: 0; margin: 24px 0 0; padding: 0; min-width: 0; }
+.fieldset legend { font-weight: 700; }
+.hint { color: #52635a; font-size: .875rem; }
+.columnRow { display: flex; gap: 16px; align-items: flex-start; margin: 18px 0; }
+.field { flex: 1; min-width: 0; }
+.field label, .linkGroup label { display: block; font-size: .875rem; font-weight: 600; }
+.field input, .linkGroup input { display: block; width: 100%; min-width: 0; padding: 12px; border: 1px solid #a5b6aa; border-radius: 8px; background: white; color: #203b33; margin-top: 8px; }
+.field input[aria-invalid="true"] { border-color: #a23128; }
+.remove { margin-top: 28px; padding: 12px 0 12px 8px; border: none; background: transparent; color: #52635a; font-size: .875rem; }
+.primary, .secondary { padding: 11px 18px; border-radius: 8px; border: 1px solid #203b33; }
+.primary { background: #203b33; color: white; font-weight: 600; }
+.secondary { background: transparent; color: #203b33; }
+.columnActions { display: flex; align-items: center; gap: 16px; margin: 22px 0; }
+.error { color: #a23128; font-size: .9rem; }
+.private { background: #f4f0de; border-radius: 10px; padding: 16px; margin-top: 24px; }
+.private > p { margin-top: 0; }
+.linkGroup { margin-top: 20px; }
+.linkGroup input { font-family: ui-monospace, monospace; font-size: .8rem; }
+.linkGroup button { margin-top: 12px; }
+.copyStatus { display: block; font-size: .875rem; margin-top: 8px; }
+.notice { border-left: 3px solid #976513; padding-left: 14px; font-size: .875rem; }
+.footer { margin: 28px 0; color: #52635a; font-size: .8rem; }
+@media (max-width: 480px) {
+  .page { padding-inline: 16px; }
+  .columnRow { gap: 8px; }
+  .primary { width: 100%; }
+}
