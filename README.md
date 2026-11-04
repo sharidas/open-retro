@@ -135,7 +135,9 @@ permits both operations only for the owner while the room is unexpired and in
 the writing phase. Refresh is disabled while editing or confirming deletion so
 unsaved edits are not discarded. Failed edits preserve the editor text; after
 an interrupted request, cancel and refresh saved cards to check the result.
-Shared reveal is task 10. Narrow-screen verification remains pending from task 08.
+Facilitator reveal is available through the API, with a read-only shared board
+shown after reload. The reveal button and automatic updates are task 11.
+Narrow-screen verification remains pending from task 08.
 
 ## Private Card API
 
@@ -146,9 +148,25 @@ characters. Only active writing-phase rooms accept cards.
 
 `GET /api/rooms/:id/cards` returns only that participant's cards. Ownership is
 filtered in the database and never included in response payloads. The protected
-`GET /api/rooms/:id/facilitator/cards` returns an empty list until reveal behavior
-is implemented. The participant writing board uses these private card endpoints.
+`GET /api/rooms/:id/facilitator/cards` returns an empty list during writing and
+all anonymous cards after reveal. Participants use the separate authenticated
+`GET /api/rooms/:id/revealed-cards` endpoint for shared cards; the private card
+endpoint remains owner-only to keep stale writing screens safe.
 See the [API notes](docs/api.md) for validation and privacy behavior.
+
+## Reveal Through the API
+
+`POST /api/rooms/:id/reveal` with `Authorization: Bearer <facilitator-secret>`
+ends writing and reveals the room's cards together. It requires no request body.
+Only the correct room's facilitator can reveal; repeated reveals return 409.
+Expired rooms cannot be revealed. Card creation, editing, and deletion are
+rejected after reveal, including requests from stale tabs.
+
+Reload a participant or facilitator room page after reveal to view all cards
+without author labels, ownership hashes, or submission timestamps. The shared
+board has manual refresh and no mutation controls. The facilitator reveal button
+and polling across open tabs are intentionally left for task 11. Copy any unsent
+drafts before reloading; they are held only in page memory.
 
 The room model accepts one to five nonempty column names, trims surrounding
 whitespace, preserves column order, and starts in the writing phase. The allowed
