@@ -302,3 +302,25 @@ quotas, accepting temporary unavailability rather than paid overages.
 Add PostgreSQL support when implementing the company self-hosted edition.
 Keep integrations, accounts, AI summaries, permanent history, and action-item
 tracking outside the initial scope unless the product requirements change.
+
+## Board Experience Improvements
+
+These small delivery chunks precede the remaining retention work. Preserve the
+existing anonymous access rules and maximum of five columns.
+
+- [x] **Compact board layout.** Replace large access panels with a wide workspace,
+  compact phase toolbar, and expandable Invite team / Room details. Keep access
+  failures and storage warnings visible. Use pastel column backgrounds, light
+  cards, compact facilitator controls, and a single-column narrow-screen layout.
+  Colours are currently decorative defaults, not saved room settings.
+- [ ] **Column colours and templates.** Offer Classic (Went well / Could improve /
+  Next steps), Start–Stop–Continue, Mad–Sad–Glad, and 4Ls (Liked / Learned / Lacked /
+  Longed for), plus Start from scratch. Preview templates and allow column names,
+  accessible palette colours, and column count to be changed before creation.
+- [ ] **Optional mood check-in.** Add a pre-writing check-in with five labelled
+  emoji choices, one changeable answer per participant, and anonymous aggregate
+  results revealed when writing starts. Do not link moods to cards.
+- [ ] **Collaborative grouping.** After reveal, participants and facilitators can
+  group, name, move, and ungroup similar cards. Preserve original cards and votes;
+  label group totals as the sum of card votes. Start with accessible explicit
+  controls, then consider drag-and-drop. Freeze grouping at closure.

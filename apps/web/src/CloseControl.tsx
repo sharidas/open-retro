@@ -41,7 +41,7 @@ export function CloseControl({ session, disabled, onClosed, onRefresh }: {
       if (mounted.current) setPending(false)
     }
   }
-  return <section className={styles.panel} aria-label="Facilitator controls">
+  return <section className={styles.facilitatorBar} aria-label="Facilitator controls">
     <h2>Finished discussing?</h2>
     <p>Close the retrospective when everyone has finished voting and discussing.</p>
     {!confirming ? <button className={styles.primary} disabled={disabled} onClick={() => setConfirming(true)}>Close room</button> : <>

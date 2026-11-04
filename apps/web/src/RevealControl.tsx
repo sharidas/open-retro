@@ -41,7 +41,7 @@ export function RevealControl({ session, disabled, onRevealed, onRefresh }: {
       if (mounted.current) setPending(false)
     }
   }
-  return <section className={styles.panel} aria-label="Facilitator controls">
+  return <section className={styles.facilitatorBar} aria-label="Facilitator controls">
     <h2>Ready to share?</h2>
     <p>Check that everyone has finished writing before revealing the cards.</p>
     {!confirming ? <button className={styles.primary} disabled={disabled} onClick={() => setConfirming(true)}>Reveal cards</button> : <>
