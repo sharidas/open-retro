@@ -66,3 +66,54 @@
   .columnRow { gap: 8px; }
   .primary { width: 100%; }
 }
+
+/* Room workspace: compact navigation leaves the canvas to the team. */
+.workspace { max-width: 1560px; padding: 28px clamp(16px, 3vw, 48px) 56px; }
+.roomHeader { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-bottom: 24px; }
+.workspace h1 { font-size: clamp(1.5rem, 3vw, 2.2rem); margin: 10px 0 0; letter-spacing: -.035em; }
+.roleLabel { font-size: .8rem; color: #52635a; }
+.roomToolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 16px; border: 1px solid #d8e0d7; border-radius: 14px; background: #fffefa; box-shadow: 0 3px 12px #203b3305; }
+.phaseBadge { display: flex; align-items: center; gap: 8px; font-size: .85rem; font-weight: 700; margin: 0; }
+.phaseDot { width: 8px; height: 8px; border-radius: 50%; background: #38775b; }
+.phaseHint { font-size: .85rem; color: #52635a; margin: 0 auto 0 4px; }
+.toolbarDetails { position: relative; }
+.toolbarDetails > summary { cursor: pointer; font-size: .85rem; font-weight: 600; padding: 10px 12px; border-radius: 8px; }
+.toolbarDetails[open] > summary, .toolbarDetails > summary:hover { background: #edf3eb; }
+.toolbarPopover { position: absolute; right: 0; top: calc(100% + 12px); z-index: 5; width: min(390px, calc(100vw - 64px)); padding: 20px; background: #fffefa; border: 1px solid #bccbc0; border-radius: 14px; box-shadow: 0 12px 36px #203b331a; }
+.toolbarPopover .linkGroup { margin-top: 0; }
+.toolbarPopover p { line-height: 1.6; }
+.roomAlert { padding: 12px 20px; border: 1px solid #dcb5af; background: #fff4f0; border-radius: 12px; margin-bottom: 16px; }
+.facilitatorBar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; padding: 16px 0; border-bottom: 1px solid #d8e0d7; }
+.facilitatorBar h2 { font-size: .95rem; margin: 0; }
+.facilitatorBar > p { font-size: .875rem; margin: 0; flex: 1 1 280px; line-height: 1.5; }
+.facilitatorBar > button { margin-left: auto; }
+.boardIntro { margin-top: 24px; }
+.boardIntro h2 { margin: 0 0 8px; font-size: 1.25rem; letter-spacing: -.025em; }
+.boardIntro p { margin: 6px 0; line-height: 1.5; font-size: .875rem; }
+.boardIntro .cardActions { margin-top: 12px; }
+.workspace .board { align-items: start; gap: 18px; }
+.workspace .boardColumn { --column-tint: #eaf0e6; --column-accent: #66815b; background: var(--column-tint); border: 1px solid #203b3310; border-top: 3px solid var(--column-accent); padding: 18px; border-radius: 14px; min-height: 260px; }
+.workspace .boardColumn:nth-child(5n+2) { --column-tint: #f6ece5; --column-accent: #ad7353; }
+.workspace .boardColumn:nth-child(5n+3) { --column-tint: #e8edf6; --column-accent: #637ea9; }
+.workspace .boardColumn:nth-child(5n+4) { --column-tint: #f1eaf4; --column-accent: #9370a2; }
+.workspace .boardColumn:nth-child(5n+5) { --column-tint: #f5efd9; --column-accent: #a58b3d; }
+.workspace .card { background: #fffefa; border: 1px solid #203b3312; border-radius: 10px; box-shadow: 0 3px 6px #203b3307, 0 1px 2px #203b3305; }
+.workspace .draft { border-color: #203b332e; background: #ffffffc9; min-height: 100px; }
+.workspace .primary, .workspace .secondary { border-radius: 9px; }
+.workspace .secondary { background: #ffffff80; border-color: #203b3340; }
+.workspace button { transition: background-color .15s, box-shadow .15s; }
+.workspace button:not(:disabled):hover { box-shadow: 0 2px 8px #203b3320; }
+.workspace .primary:not(:disabled):hover { background: #315949; }
+.workspace .viewControls { margin-top: 16px; gap: 6px; }
+.workspace .viewControls button[aria-pressed="true"] { background: #203b33; color: white; }
+:global(summary:focus-visible) { outline: 3px solid #976513; outline-offset: 4px; }
+@media (max-width: 680px) {
+  .roomHeader { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .phaseHint { flex-basis: 100%; order: 1; }
+  .toolbarDetails { position: static; }
+  .roomToolbar { position: relative; }
+  .toolbarPopover { left: 0; right: 0; width: 100%; top: calc(100% + 8px); }
+  .facilitatorBar > button { margin-left: 0; }
+  .workspace .board { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .workspace button { transition: none; } }

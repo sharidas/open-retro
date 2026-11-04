@@ -288,3 +288,11 @@ facilitator retain read access to cards and final totals until expiry or deletio
 Open participant views detect closure automatically; the server also rejects
 writes from stale tabs immediately. Network failures trigger a room-status check
 instead of automatically repeating the close request.
+
+## Board Workspace
+
+Room pages use a wide board with a compact phase toolbar. **Invite team** reveals
+the participant share link; **Room details** contains expiry and session guidance.
+Access failures and storage warnings remain visible outside these disclosures.
+Pastel columns and light cards help separate topics. Current colours are visual
+defaults; configurable palettes and four creation templates are the next chunk.

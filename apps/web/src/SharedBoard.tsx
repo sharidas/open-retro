@@ -74,7 +74,7 @@ export function SharedBoard({ session, columns, phase, available, onRoomRefresh 
   }
 
   return <section aria-label="Shared retrospective">
-    <div className={styles.panel}>
+    <div className={styles.boardIntro}>
       <h2>Everyone’s thoughts, together</h2>
       <p>Cards are revealed without author labels. Writing has ended; cards can no longer be added, edited, or deleted.</p>
       {phase === 'closed' ? <p className={styles.notice}>Voting is closed. Final totals are read-only.</p> :

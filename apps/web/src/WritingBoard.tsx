@@ -121,7 +121,7 @@ export function WritingBoard({ session, columns, phase, available = true, onLoca
   }
 
   return <section aria-label="Private writing">
-    <div className={styles.panel}>
+    <div className={styles.boardIntro}>
       <h2>{phase === 'writing' ? 'Your private writing space' : 'Your unsent writing'}</h2>
       {phase === 'writing' ? <p>Only you can see your saved cards during writing. Other participants and the facilitator cannot read them yet.</p> :
         <p>Writing has ended. These drafts and unsaved edits were not shared. Copy anything you want to keep before leaving.</p>}
