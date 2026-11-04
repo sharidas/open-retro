@@ -242,12 +242,18 @@ Demo: reveal once and watch both participant boards update.
   totals plus their own selections/budget; facilitators see only totals. All 156
   tests (including 21 voting tests), type checks, production build, and a live
   concurrency/privacy check passed. Independent database connections cannot
-  overspend the budget. Voting controls and discussion ordering remain task 13;
-  task 08's narrow-screen check remains pending.
+  overspend the budget. Task 08's narrow-screen check remains pending.
 - [ ] **13 — Build voting and discussion views.** Show vote totals, remaining
   votes, and a way to prioritize most-voted cards without exposing voters.
   Done when participants can add/remove their own votes and see shared totals.
   Learn: shared state and interaction feedback.
+  Implementation complete: participant add/remove controls, remaining budget,
+  shared totals, facilitator totals-only view, and global most-voted ordering.
+  All 180 tests (144 API/domain and 36 frontend), TypeScript checks, and production
+  build passed. Browser verification reached the revealed five-column board;
+  final budget/undo, peer totals, ordering, reload, and closed-view checks remain
+  pending because the browser tool connection failed. Leave this task unchecked
+  until those browser checks are completed.
 - [ ] **14 — Close the room.** Add facilitator-only closure and read-only UI.
   Done when closed rooms reject card mutations and votes, including from stale
   clients, while remaining readable until deletion or expiry.

@@ -173,8 +173,16 @@ Participant reads aggregate totals and only their own selections in one query;
 remaining budget is derived from those selections. Facilitator reads project
 card IDs and totals only. No voter hashes, participant lists, or voting timestamps
 are exposed. Closed rooms retain read-only snapshots, while vote changes require
-revealed state. Voting for one's own cards is allowed. UI controls, totals, and
-discussion ordering remain task 13.
+revealed state. Voting for one's own cards is allowed.
+
+The web client validates full voting snapshots against the revealed card IDs.
+`useVoting` polls visible revealed boards every ten seconds, backs off on failures,
+and stops recurring polling for closed boards. Mutation guards prevent duplicate
+clicks; versioned reads prevent stale polls from replacing confirmed changes.
+Every mutation, including an uncertain failure, triggers a full reconciliation
+before another vote is allowed. The client never automatically replays mutations.
+The shared board shows personal selections/budget only to participants and offers
+a global most-voted view with deterministic card-ID tie breaking.
 
 - Facilitator access and participant access must use separate secrets.
 - Participant identifiers must not be exposed in facilitator responses.

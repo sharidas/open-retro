@@ -7,8 +7,8 @@ The project is in early development. You can create a room with one to five
 configured columns and receive separate participant and facilitator links.
 Participants can join anonymously and facilitators can open their private room
 view. Participants can write, edit, delete, and reload their own private cards.
-Facilitators can reveal cards and open room views update automatically. Voting
-is available through the API; voting controls and totals in the UI are task 13.
+Facilitators can reveal cards and open room views update automatically. Participants can vote after reveal, see their remaining votes and shared totals,
+and switch to a most-voted discussion view.
 
 ## Run Locally With Docker
 
@@ -196,7 +196,15 @@ Writing, closed, and expired rooms reject vote changes. Participant snapshots
 come from `GET /api/rooms/:id/votes`; facilitator totals come from the protected
 `GET /api/rooms/:id/facilitator/votes`. Only the participant sees their own
 selections and remaining budget; facilitators receive card totals without voter
-identifiers. Voting buttons and discussion ordering are task 13.
+identifiers.
+
+The shared board provides Vote and Remove controls, a remaining-vote counter,
+and By column / Most voted views. Most voted ranks cards across all columns,
+with stable card-ID ordering for ties. Facilitators see totals without voting
+controls; they can join through the participant link to cast their own votes.
+Totals refresh every ten seconds while the revealed board is visible. Failed
+or uncertain requests pause voting until a fresh snapshot confirms the state;
+vote changes are not automatically replayed. Closed boards show read-only totals.
 
 Migration 0005 adds room-scoped votes with participant/card foreign keys, one
 vote per participant/card, and three unique vote slots per participant/room.

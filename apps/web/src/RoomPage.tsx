@@ -31,11 +31,12 @@ export function RoomPage({ session }: { session: RoomSession }) {
           <p className={styles.hint}>Your private link was removed from the address bar. This tab remembers facilitator access; save the original link privately for future use.</p>}
         {session.storageWarning && <p className={styles.notice}>Session storage is unavailable. Facilitator access will be lost when you leave or reload; keep your original private link.</p>}
         <CopyLink label="Participant link" value={participantLink} />
-        {room.state !== 'writing' ? <p className={styles.notice}>Writing has ended. The revealed cards are read-only; voting is coming next.</p> : session.role === 'facilitator' ? <p className={styles.notice}>Cards stay private during writing, including from you. Open the participant link separately if you would like to contribute.</p> :
+        {room.state !== 'writing' ? <p className={styles.notice}>{room.state === 'closed' ? 'This retrospective is closed. The final board is read-only.' : 'Writing has ended. Vote on the revealed cards and discuss the most-voted topics.'}</p> : session.role === 'facilitator' ? <p className={styles.notice}>Cards stay private during writing, including from you. Open the participant link separately if you would like to contribute.</p> :
           <p className={styles.notice}>Write, edit, or delete your own cards below. The room will update when your facilitator reveals it.</p>}
       </>}
     </section>
-    {room && room.state !== 'writing' && !terminal && <SharedBoard session={session} columns={room.columns} />}
+    {room && room.state !== 'writing' && !terminal && <SharedBoard session={session} columns={room.columns}
+      phase={room.state} available={available} onRoomRefresh={refresh} />}
     {room && session.role === 'participant' && (room.state === 'writing' || retainWriting) &&
       <details className={styles.writingRecovery} open hidden={room.state !== 'writing' && !hasUnsentWriting}>
         <summary>{room.state === 'writing' ? 'Your private writing' : 'Your unsent writing — not shared'}</summary>
