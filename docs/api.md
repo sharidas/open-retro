@@ -118,7 +118,10 @@ session with the same privacy rules as everyone else.
 
 For now, participant reads remain owner-only in every phase and facilitator
 reads remain empty. Shared card visibility after reveal is task 10. Updating
-and deleting owned cards is task 09; the writing UI is task 08.
+and deleting owned cards is task 09. The writing UI uses these endpoints, keeps
+drafts in page memory, and does not automatically retry submissions. Manual card
+refresh preserves drafts; interrupted-save feedback asks users to check saved
+cards before resubmitting. React renders returned text without HTML interpretation.
 
 Card errors: 401 for absent/unregistered/cross-room credentials; 404 for expired
 registered rooms; 409 when writing has ended or room eligibility changes during

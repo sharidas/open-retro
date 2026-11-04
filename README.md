@@ -6,8 +6,8 @@ need anonymous feedback without accounts, tracking, or hidden paywalls.
 The project is in early development. You can create a room with one to five
 configured columns and receive separate participant and facilitator links.
 Participants can join anonymously and facilitators can open their private room
-view. Private card submission/retrieval is available through the API; the card
-writing interface and voting are not implemented yet.
+view. Participants can write and reload their own private cards. Card editing,
+reveal controls, and voting are not implemented yet.
 
 ## Run Locally With Docker
 
@@ -110,8 +110,26 @@ the stripped address does not grant access in a fresh tab. If session storage
 is blocked, access lasts only for the current page and a warning is displayed.
 Facilitator access does not create a participant session automatically. Both
 views show configured columns, phase, expiry, and a safe participant share link.
-Card submission is now available through the API. The writing interface and
-facilitator management controls are still later tasks.
+Participants can now write and view their own saved cards in the room. Facilitator
+management controls are still later tasks.
+
+## Private Writing Board
+
+Open a participant link to load your saved cards and write into any configured
+column. Each card accepts 1–2000 characters. Saving disables submission while
+the request is pending, clears the draft only after confirmed success, and shows
+the saved card in its column. Cards render as plain text, preserving line breaks.
+Only this participant's cards are requested; the facilitator page has no card
+text or writing form.
+
+Use “Refresh my cards” to reload saved cards without losing unsent drafts.
+Connection failures keep drafts on the page. If a save is interrupted, check
+saved cards before retrying because the server may have accepted the request.
+Writing-phase, expiry, and authorization errors prevent further saves while
+leaving drafts available to copy. Drafts are not stored in browser storage and
+are lost on navigation/reload; saved cards persist in SQLite. The interface warns
+against entering secrets or sensitive information and stacks columns on mobile.
+Editing and deleting cards are task 09; shared reveal is task 10.
 
 ## Private Card API
 
@@ -123,7 +141,7 @@ characters. Only active writing-phase rooms accept cards.
 `GET /api/rooms/:id/cards` returns only that participant's cards. Ownership is
 filtered in the database and never included in response payloads. The protected
 `GET /api/rooms/:id/facilitator/cards` returns an empty list until reveal behavior
-is implemented. The UI remains unchanged in task 07; card writing is task 08.
+is implemented. The participant writing board uses these private card endpoints.
 See the [API notes](docs/api.md) for validation and privacy behavior.
 
 The room model accepts one to five nonempty column names, trims surrounding

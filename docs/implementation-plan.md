@@ -173,6 +173,16 @@ Demo: create a five-column room and join it from a separate browser session.
   and the brief warning against entering secrets or sensitive information.
   Done when two participants can write privately, including on a narrow screen.
   Learn: UI state and accessible forms.
+  Implementation is ready: participant-only writing forms, saved-card loading,
+  refresh without draft loss, blank validation, 2000-character limits, pending
+  states, and safe plain-text rendering. Two origin-isolated browser sessions
+  confirmed private cards and reload persistence; facilitators saw no card text.
+  A stale-phase rejection preserved the editable draft and disabled saving.
+  All 87 existing tests, TypeScript checks, and production build passed.
+  Narrow-screen verification remains outstanding: the browser viewport override
+  kept reporting a 1280px viewport despite a requested 375px width. Responsive
+  styles are implemented, but this task stays unchecked until that acceptance
+  check is verified.
 - [ ] **09 — Edit and delete owned cards.** Add API authorization and UI controls.
   Done when owners can change their cards during writing, while another token,
   another room, or a later phase cannot authorize the same changes.

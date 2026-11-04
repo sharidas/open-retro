@@ -1,9 +1,9 @@
 :global(*) { box-sizing: border-box; }
 :global(body) { margin: 0; background: #f5f4ed; color: #203b33; font-family: system-ui, sans-serif; }
-:global(button), :global(input) { font: inherit; }
+:global(button), :global(input), :global(textarea) { font: inherit; }
 :global(button) { cursor: pointer; }
 :global(button:disabled) { opacity: .5; cursor: default; }
-:global(button:focus-visible), :global(input:focus-visible), :global(a:focus-visible) { outline: 3px solid #976513; outline-offset: 4px; }
+:global(button:focus-visible), :global(input:focus-visible), :global(textarea:focus-visible), :global(a:focus-visible) { outline: 3px solid #976513; outline-offset: 4px; }
 :global(a) { color: #245c48; }
 .page { max-width: 860px; margin: auto; padding: clamp(28px, 6vw, 64px) 24px 24px; }
 .eyebrow { font-size: .75rem; font-weight: 700; letter-spacing: .12em; }
@@ -39,6 +39,12 @@
 .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px; margin-top: 24px; }
 .boardColumn { padding: 20px; border: 1px solid #bccbc0; border-radius: 12px; background: #fffefa; min-width: 0; overflow-wrap: anywhere; }
 .boardColumn h2 { font-size: 1.1rem; margin-top: 0; }
+.draftLabel { display: block; font-size: .875rem; font-weight: 600; margin-top: 24px; }
+.draft { display: block; width: 100%; min-width: 0; resize: vertical; padding: 12px; margin-top: 8px; background: white; color: #203b33; border: 1px solid #a5b6aa; border-radius: 8px; }
+.draft[aria-invalid="true"] { border-color: #a23128; }
+.cardList { list-style: none; padding: 0; }
+.card { white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; background: #f4f0de; border: 1px solid #ded8bc; border-radius: 8px; margin: 12px 0; line-height: 1.6; }
+.boardColumn .primary { width: 100%; font-size: .875rem; }
 @media (max-width: 480px) {
   .page { padding-inline: 16px; }
   .columnRow { gap: 8px; }
