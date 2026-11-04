@@ -33,6 +33,20 @@ preserving clear boundaries between:
 3. Closed or deleted: the room is no longer active.
 4. Expired: stale room data is removed automatically.
 
+The phase sequence is strictly `writing → revealed → closed`. Repeated
+transitions, skipping reveal, and reopening a room are rejected. Deletion and
+expiration are separate retention operations to implement later, not alternate
+phase transitions.
+
+Domain rules live in `apps/api/src/domain/room.ts` without HTTP or database
+dependencies. Creation validates one to five string column names, trims outer
+whitespace, rejects blank names, preserves order, and starts in writing. Columns
+are fixed after creation in the MVP; duplicate names are allowed. Domain
+functions return a new room rather than modifying the input. A typed
+`RoomRuleError` distinguishes column validation from invalid phase transitions.
+Authorization belongs to later API work; knowing a valid transition does not
+grant permission to perform it.
+
 ## Privacy Boundaries
 
 - Facilitator access and participant access must use separate secrets.

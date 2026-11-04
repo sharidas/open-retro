@@ -86,11 +86,16 @@ storage can create another participant. Document this limitation clearly.
   TypeScript checks, production compilation, proxied health response, and the
   connected state in a browser. Dependency installation reported no known
   vulnerabilities. No host Node.js installation is required.
-- [ ] **02 — Define the room rules.** Model columns and writing/revealed/closed
+- [x] **02 — Define the room rules.** Model columns and writing/revealed/closed
   states as domain rules. Validate one to five nonempty column names and allowed
   transitions. Add focused tests for invalid input and transitions.
   Done when rules can be exercised independently of the UI and database.
   Learn: domain models, validation, and unit tests.
+  Completed with independent room creation/transition functions and typed rule
+  errors. Names are trimmed; one to five nonempty names are required. Only
+  writing-to-revealed and revealed-to-closed transitions are allowed. Vitest
+  runs inside Docker; all 28 tests, TypeScript checks, and the production build
+  passed. HTTP integration and facilitator authorization remain later tasks.
 - [ ] **03 — Add persistent rooms.** Introduce a SQLite schema and migration,
   create/read operations, and expiration timestamps.
   Done when a saved room survives an API restart.

@@ -8,6 +8,7 @@ services:
       - "127.0.0.1:5173:5173"
     volumes:
       - ./apps/api/src:/app/apps/api/src:ro
+      - ./apps/api/tests:/app/apps/api/tests:ro
       - ./apps/web/src:/app/apps/web/src:ro
       - ./apps/web/index.html:/app/apps/web/index.html:ro
       - ./apps/web/vite.config.ts:/app/apps/web/vite.config.ts:ro

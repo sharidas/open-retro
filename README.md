@@ -33,10 +33,12 @@ Run verification inside the running container:
 
 ```bash
 docker compose exec dev npm run check
+docker compose exec dev npm test
 docker compose exec dev npm run build
 ```
 
-`check` validates TypeScript; `build` compiles the API and bundles the frontend.
+`check` validates TypeScript, including the API tests; `test` runs the room-rule
+tests once using Vitest; `build` compiles the API and bundles the frontend.
 Neither installs anything on your machine. Container dependencies and build
 outputs stay inside the container.
 
@@ -50,7 +52,16 @@ outputs stay inside the container.
 
 React/Vite provide the interactive UI and fast feedback while editing. Hono
 keeps the API small and supports a future Cloudflare adapter. CSS Modules scope
-styles to components. SQLite, validation, and domain tests arrive in later tasks.
+styles to components. Room rules live in `apps/api/src/domain/room.ts`, separate
+from HTTP and storage. Vitest checks them in `apps/api/tests/room.test.ts` without
+starting a server or database. SQLite and API request validation arrive later.
+
+The room model accepts one to five nonempty column names, trims surrounding
+whitespace, preserves column order, and starts in the writing phase. The allowed
+sequence is `writing → revealed → closed`; skipping, reopening, and repeating
+transitions fail. These are domain rules only for now: HTTP endpoints and
+facilitator authorization will be added in later tasks. Column names/order are
+fixed at creation for the MVP. Duplicate names are currently allowed.
 
 Development runs locally. The public deployment must stay within a $0 budget:
 use free services only, accept quota-related unavailability, and do not enable
