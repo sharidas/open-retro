@@ -9,6 +9,24 @@ const cardFields = { id: cards.id, columnIndex: cards.columnIndex, text: cards.t
 
 export function cardRepository(db: Database, clock: () => number = Date.now) {
   return {
+    async updateOwnCard(roomId: string, ownerHash: string, cardId: string, text: string): Promise<PrivateCard | undefined> {
+      const result = await db.all<PrivateCard>(sql`
+        UPDATE cards SET text = ${text}
+        WHERE id = ${cardId} AND room_id = ${roomId} AND owner_hash = ${ownerHash}
+          AND EXISTS (SELECT 1 FROM rooms WHERE id = ${roomId} AND state = 'writing' AND expires_at > ${clock()})
+        RETURNING id, column_index AS columnIndex, text
+      `)
+      return result[0]
+    },
+    async deleteOwnCard(roomId: string, ownerHash: string, cardId: string): Promise<boolean> {
+      const result = await db.all(sql`
+        DELETE FROM cards
+        WHERE id = ${cardId} AND room_id = ${roomId} AND owner_hash = ${ownerHash}
+          AND EXISTS (SELECT 1 FROM rooms WHERE id = ${roomId} AND state = 'writing' AND expires_at > ${clock()})
+        RETURNING id
+      `)
+      return result.length === 1
+    },
     async submitCard(roomId: string, ownerHash: string, columnIndex: number, text: string): Promise<PrivateCard | undefined> {
       // Authorization and lifecycle conditions are part of the write itself,
       // closing the gap between the API's initial checks and the insertion.

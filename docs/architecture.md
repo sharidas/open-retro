@@ -109,6 +109,19 @@ HTTP endpoint accepts a client-supplied owner hash or provides an individual
 card lookup in this slice. Raw tokens, owner hashes, and writing timestamps are
 not part of card responses. Cards currently store no writing timestamps.
 
+Owned card mutations use PATCH (text only) and DELETE endpoints. A shared
+participant middleware authenticates collection and single-card mutation paths.
+SQL mutations constrain card ID, room ID, owner hash, writing phase, and expiry
+in one statement; a stale initial check cannot authorize a late mutation. Card
+foreign keys preserve participant membership. Missing and foreign cards share
+the same 404 response. Successful updates return safe fields; deletion returns
+204 with no content. No schema change was needed for this task.
+
+The writing board keeps edit state local to the saved-card component and allows
+one edit/confirmation at a time. It disables refresh until that state is closed,
+preserves failed edits, and changes saved cards only after API confirmation.
+There is no optimistic concurrency version; concurrent edits are last-write-wins.
+
 - Facilitator access and participant access must use separate secrets.
 - Participant identifiers must not be exposed in facilitator responses.
 - Stored participant tokens should be hashed rather than stored directly.

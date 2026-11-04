@@ -76,7 +76,7 @@ export function RoomPage({ session }: { session: RoomSession }) {
         {session.storageWarning && <p className={styles.notice}>Session storage is unavailable. Facilitator access will be lost when you leave or reload; keep your original private link.</p>}
         <CopyLink label="Participant link" value={participantLink} />
         {session.role === 'facilitator' ? <p className={styles.notice}>Cards stay private during writing, including from you. Open the participant link separately if you would like to contribute. Reveal controls and voting are coming next.</p> :
-          <p className={styles.notice}>Save your thoughts privately below. Editing, reveal controls, and voting are coming next.</p>}
+          <p className={styles.notice}>Write, edit, or delete your own cards below. Reveal controls and voting are coming next.</p>}
       </>}
     </section>
     {room && !loading && !error && session.role === 'participant' && <WritingBoard session={session} columns={room.columns} phase={room.state} />}

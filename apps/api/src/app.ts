@@ -1,4 +1,4 @@
-import { Hono, type Handler } from 'hono'
+import { Hono, type Handler, type MiddlewareHandler } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { z } from 'zod'
 import { createFacilitatorSecret, hashSecret, verifyFacilitatorSecret } from './domain/facilitator.js'
@@ -16,6 +16,7 @@ const createCardInput = z.strictObject({
   columnIndex: z.number().int().min(0).max(4),
   text: z.string().trim().min(1).max(2000),
 })
+const updateCardInput = z.strictObject({ text: z.string().trim().min(1).max(2000) })
 
 export function createApp(rooms: Rooms, clock: () => number = Date.now) {
   const app = new Hono<AppEnv>()
@@ -31,17 +32,44 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
   })
   app.get('/api/health', (c) => c.json({ status: 'ok' }))
 
-  app.use('/api/rooms/:id/cards', async (c, next) => {
+  const authorizeCardAccess: MiddlewareHandler<AppEnv> = async (c, next) => {
+    const id = c.req.param('id') ?? ''
     const token = /^Bearer ([A-Za-z0-9_-]{43})$/.exec(c.req.header('Authorization') ?? '')?.[1]
     const ownerHash = token ? hashSecret(token) : null
-    if (!ownerHash || !await rooms.hasParticipant(c.req.param('id'), ownerHash)) {
+    if (!ownerHash || !await rooms.hasParticipant(id, ownerHash)) {
       return c.json({ error: 'UNAUTHORIZED' }, 401)
     }
-    const room = await rooms.find(c.req.param('id'))
+    const room = await rooms.find(id)
     if (!room || room.expiresAt <= clock()) return c.json({ error: 'ROOM_NOT_FOUND' }, 404)
     c.set('room', room)
     c.set('ownerHash', ownerHash)
     await next()
+  }
+  app.use('/api/rooms/:id/cards', authorizeCardAccess)
+  app.use('/api/rooms/:id/cards/:cardId', authorizeCardAccess)
+
+  app.patch('/api/rooms/:id/cards/:cardId', bodyLimit({ maxSize: 16384,
+    onError: (c) => c.json({ error: 'BODY_TOO_LARGE' }, 413),
+  }), async (c) => {
+    const room = c.get('room')
+    if (room.state !== 'writing') return c.json({ error: 'WRITING_ENDED' }, 409)
+    if (c.req.header('Content-Type')?.split(';')[0]?.trim().toLowerCase() !== 'application/json') {
+      return c.json({ error: 'JSON_REQUIRED' }, 415)
+    }
+    let body: unknown
+    try { body = await c.req.json() } catch { return c.json({ error: 'INVALID_JSON' }, 400) }
+    const parsed = updateCardInput.safeParse(body)
+    if (!parsed.success) return c.json({ error: 'INVALID_CARD', message: 'Provide only text with 1–2000 characters.' }, 400)
+    const card = await rooms.updateOwnCard(room.id, c.get('ownerHash'), c.req.param('cardId'), parsed.data.text)
+    if (!card) return c.json({ error: 'CARD_NOT_FOUND' }, 404)
+    return c.json({ card })
+  })
+  app.delete('/api/rooms/:id/cards/:cardId', async (c) => {
+    const room = c.get('room')
+    if (room.state !== 'writing') return c.json({ error: 'WRITING_ENDED' }, 409)
+    const removed = await rooms.deleteOwnCard(room.id, c.get('ownerHash'), c.req.param('cardId'))
+    if (!removed) return c.json({ error: 'CARD_NOT_FOUND' }, 404)
+    return c.body(null, 204)
   })
   app.get('/api/rooms/:id/cards', async (c) => {
     return c.json({ cards: await rooms.listOwnCards(c.get('room').id, c.get('ownerHash')) })

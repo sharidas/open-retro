@@ -44,6 +44,10 @@
 .draft[aria-invalid="true"] { border-color: #a23128; }
 .cardList { list-style: none; padding: 0; }
 .card { white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; background: #f4f0de; border: 1px solid #ded8bc; border-radius: 8px; margin: 12px 0; line-height: 1.6; }
+.cardText { margin-top: 0; }
+.cardActions { display: flex; flex-wrap: wrap; gap: 8px; white-space: normal; }
+.cardActions .secondary { font-size: .8rem; padding: 8px 10px; }
+.card .draftLabel { margin-top: 0; }
 .boardColumn .primary { width: 100%; font-size: .875rem; }
 @media (max-width: 480px) {
   .page { padding-inline: 16px; }

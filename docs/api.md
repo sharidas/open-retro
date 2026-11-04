@@ -118,10 +118,37 @@ session with the same privacy rules as everyone else.
 
 For now, participant reads remain owner-only in every phase and facilitator
 reads remain empty. Shared card visibility after reveal is task 10. Updating
-and deleting owned cards is task 09. The writing UI uses these endpoints, keeps
+and deleting owned cards is now supported below. The writing UI uses these endpoints, keeps
 drafts in page memory, and does not automatically retry submissions. Manual card
 refresh preserves drafts; interrupted-save feedback asks users to check saved
 cards before resubmitting. React renders returned text without HTML interpretation.
+
+### Edit and Delete Owned Cards
+
+- `PATCH /api/rooms/:id/cards/:cardId` accepts only JSON `{ "text": "Updated feedback" }`.
+  Text is trimmed and limited to 1–2000 characters; the column and ownership cannot
+  be changed. Success returns HTTP 200 with the safe `{ "card": { ... } }` shape.
+- `DELETE /api/rooms/:id/cards/:cardId` requires no body and returns HTTP 204 on
+  success. Deletion is immediate and has no undo endpoint.
+
+Both endpoints require a participant token registered in the room and matching
+the card owner. Missing, malformed, unregistered, and facilitator credentials
+return 401. A foreign card and a nonexistent card return the same 404 response,
+without exposing text or ownership metadata. Using a card ID with another room
+also fails, even if the same participant is registered in both rooms.
+
+Expired rooms return 404; rooms outside writing return 409. Invalid edit JSON,
+extra fields, or invalid text return 400; non-JSON edits return 415 and bodies
+above 16 KiB return 413. The atomic database update/delete also checks owner,
+room, phase, and expiry. If eligibility changes between initial API authorization
+and the write, the mutation returns 404 without making a change.
+
+The UI offers cancelable editing and inline deletion confirmation. It applies
+changes only after server success, preserves failed edit drafts, blocks competing
+actions while a mutation is pending, and disables refresh while an editor or
+confirmation is open. Interrupted requests are not retried automatically. There
+is no revision-based conflict detection yet: concurrent successful edits use
+the last write, and a repeated delete returns 404 after the first succeeds.
 
 Card errors: 401 for absent/unregistered/cross-room credentials; 404 for expired
 registered rooms; 409 when writing has ended or room eligibility changes during

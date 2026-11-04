@@ -161,3 +161,141 @@ it('preserves cards on reopen and cascades room deletion without exposing owners
   await f.db.delete(rooms).where(eq(rooms.id, f.room.id))
   expect(await f.db.all(sql`SELECT id FROM cards`)).toHaveLength(0)
 })
+
+it('lets an owner update text without changing card ID, column, or privacy', async () => {
+  const f = await fixture()
+  const { card } = await (await f.submit()).json()
+  const response = await f.app.request(`/api/rooms/${f.room.id}/cards/${card.id}`, {
+    method: 'PATCH', headers: { Authorization: `Bearer ${f.owner}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: ' Updated privately ' }),
+  })
+  expect(response.status).toBe(200)
+  expect(response.headers.get('Cache-Control')).toBe('no-store')
+  const updated = { ...card, text: 'Updated privately' }
+  expect(await response.json()).toEqual({ card: updated })
+  expect(await (await f.read()).json()).toEqual({ cards: [updated] })
+  expect(await (await f.read(f.other)).json()).toEqual({ cards: [] })
+  expect(await (await f.read(f.facilitator, f.room.id, true)).json()).toEqual({ cards: [] })
+})
+
+it('deletes only the owner’s card and persists the removal', async () => {
+  const f = await fixture()
+  const { card } = await (await f.submit()).json()
+  const { card: other } = await (await f.submit({ columnIndex: 0, text: 'Other card' }, f.other)).json()
+  const response = await f.app.request(`/api/rooms/${f.room.id}/cards/${card.id}`, {
+    method: 'DELETE', headers: { Authorization: `Bearer ${f.owner}` },
+  })
+  expect(response.status).toBe(204)
+  expect(await response.text()).toBe('')
+  expect(await (await f.read()).json()).toEqual({ cards: [] })
+  expect(await (await f.read(f.other)).json()).toEqual({ cards: [other] })
+  const connection = await openDatabase(f.path)
+  try { expect(await roomRepository(connection.db).listOwnCards(f.room.id, hashSecret(f.owner))).toEqual([]) }
+  finally { connection.close() }
+})
+
+it.each(['PATCH', 'DELETE'])('%s conceals foreign and nonexistent cards with the same response', async (method) => {
+  const f = await fixture()
+  const { card } = await (await f.submit()).json()
+  for (const id of [card.id, 'missing']) {
+    const response = await f.app.request(`/api/rooms/${f.room.id}/cards/${id}`, {
+      method, headers: { Authorization: `Bearer ${f.other}`, 'Content-Type': 'application/json' },
+      ...(method === 'PATCH' ? { body: JSON.stringify({ text: 'Stolen' }) } : {}),
+    })
+    expect(response.status).toBe(404)
+    expect(await response.json()).toEqual({ error: 'CARD_NOT_FOUND' })
+  }
+  expect((await (await f.read()).json()).cards).toEqual([card])
+})
+
+it.each(['PATCH', 'DELETE'])('%s rejects missing, malformed, unregistered, and facilitator credentials', async (method) => {
+  const f = await fixture()
+  const { card } = await (await f.submit()).json()
+  for (const token of [null, 'bad', randomBytes(32).toString('base64url'), f.facilitator]) {
+    const response = await f.app.request(`/api/rooms/${f.room.id}/cards/${card.id}`, {
+      method, headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), 'Content-Type': 'application/json' },
+      ...(method === 'PATCH' ? { body: JSON.stringify({ text: 'Not allowed' }) } : {}),
+    })
+    expect(response.status).toBe(401)
+  }
+  expect((await (await f.read()).json()).cards).toEqual([card])
+})
+
+it.each(['PATCH', 'DELETE'])('%s rejects a card ID paired with another room, even for the same participant', async (method) => {
+  const f = await fixture()
+  const { card } = await (await f.submit()).json()
+  const otherRoom = await f.repo.create(['Other room'])
+  await f.repo.joinParticipant(otherRoom.id, hashSecret(f.owner))
+  const response = await f.app.request(`/api/rooms/${otherRoom.id}/cards/${card.id}`, {
+    method, headers: { Authorization: `Bearer ${f.owner}`, 'Content-Type': 'application/json' },
+    ...(method === 'PATCH' ? { body: JSON.stringify({ text: 'Wrong room' }) } : {}),
+  })
+  expect(response.status).toBe(404)
+  expect((await (await f.read()).json()).cards).toEqual([card])
+})
+
+it.each(['revealed', 'closed'] as const)('rejects edits and deletion after %s', async (state) => {
+  const f = await fixture()
+  const { card } = await (await f.submit()).json()
+  await f.db.update(rooms).set({ state }).where(eq(rooms.id, f.room.id))
+  for (const method of ['PATCH', 'DELETE']) {
+    const response = await f.app.request(`/api/rooms/${f.room.id}/cards/${card.id}`, {
+      method, headers: { Authorization: `Bearer ${f.owner}`, 'Content-Type': 'application/json' },
+      ...(method === 'PATCH' ? { body: JSON.stringify({ text: 'Too late' }) } : {}),
+    })
+    expect(response.status).toBe(409)
+  }
+  expect((await (await f.read()).json()).cards).toEqual([card])
+})
+
+it.each(['PATCH', 'DELETE'])('%s rechecks lifecycle inside the write after a stale API check', async (method) => {
+  const f = await fixture()
+  const { card } = await (await f.submit()).json()
+  const find = f.repo.find.bind(f.repo)
+  vi.spyOn(f.repo, 'find').mockImplementationOnce(async (id) => {
+    const room = await find(id)
+    await f.db.update(rooms).set({ state: 'revealed' }).where(eq(rooms.id, id))
+    return room
+  })
+  const response = await f.app.request(`/api/rooms/${f.room.id}/cards/${card.id}`, {
+    method, headers: { Authorization: `Bearer ${f.owner}`, 'Content-Type': 'application/json' },
+    ...(method === 'PATCH' ? { body: JSON.stringify({ text: 'Too late' }) } : {}),
+  })
+  expect(response.status).toBe(404)
+  expect((await (await f.read()).json()).cards).toEqual([card])
+})
+
+it('rejects edits and deletion for expired rooms without changing stored text', async () => {
+  const f = await fixture()
+  const { card } = await (await f.submit()).json()
+  f.expire()
+  for (const method of ['PATCH', 'DELETE']) {
+    expect((await f.app.request(`/api/rooms/${f.room.id}/cards/${card.id}`, {
+      method, headers: { Authorization: `Bearer ${f.owner}`, 'Content-Type': 'application/json' },
+      ...(method === 'PATCH' ? { body: JSON.stringify({ text: 'Expired' }) } : {}),
+    })).status).toBe(404)
+  }
+  expect(await f.db.all(sql`SELECT text FROM cards`)).toEqual([{ text: card.text }])
+})
+
+it.each([{ text: ' ' }, { text: 'A'.repeat(2001) }, { text: 42 }, {},
+  { text: 'A', ownerHash: 'forged' }, { text: 'A', columnIndex: 1 }, { text: 'A', roomId: 'forged' },
+])('rejects invalid or forged edit data: %#', async (input) => {
+  const f = await fixture()
+  const { card } = await (await f.submit()).json()
+  expect((await f.app.request(`/api/rooms/${f.room.id}/cards/${card.id}`, {
+    method: 'PATCH', headers: { Authorization: `Bearer ${f.owner}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })).status).toBe(400)
+  expect((await (await f.read()).json()).cards).toEqual([card])
+})
+
+it('validates edit transport and request size', async () => {
+  const f = await fixture()
+  const { card } = await (await f.submit()).json()
+  const path = `/api/rooms/${f.room.id}/cards/${card.id}`
+  const headers = { Authorization: `Bearer ${f.owner}` }
+  expect((await f.app.request(path, { method: 'PATCH', headers, body: '{}' })).status).toBe(415)
+  expect((await f.app.request(path, { method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' }, body: '{' })).status).toBe(400)
+  expect((await f.app.request(path, { method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({text:'A'.repeat(17000)}) })).status).toBe(413)
+})

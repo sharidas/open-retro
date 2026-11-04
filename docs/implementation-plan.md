@@ -183,10 +183,18 @@ Demo: create a five-column room and join it from a separate browser session.
   kept reporting a 1280px viewport despite a requested 375px width. Responsive
   styles are implemented, but this task stays unchecked until that acceptance
   check is verified.
-- [ ] **09 — Edit and delete owned cards.** Add API authorization and UI controls.
+- [x] **09 — Edit and delete owned cards.** Add API authorization and UI controls.
   Done when owners can change their cards during writing, while another token,
   another room, or a later phase cannot authorize the same changes.
   Learn: ownership checks and negative tests.
+  Completed with owner-only text edits, cancelable editors, and inline deletion
+  confirmation. Atomic SQL mutations enforce room, owner, phase, and expiry;
+  foreign and missing cards return the same 404. All 108 tests, TypeScript
+  checks, and the production build passed. Browser checks verified edit/cancel,
+  blank validation, reload persistence, delete confirmation/cancellation, and
+  retained editable text after stale-phase rejection. A live API check verified
+  successful edit/delete and subsequent empty reads. Task 08's narrow-screen
+  acceptance check remains pending independently.
 
 Demo: use two browser sessions to demonstrate private writing and ownership.
 

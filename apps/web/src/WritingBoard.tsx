@@ -1,15 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { RoomSession } from './session'
 import styles from './App.module.css'
+import { isCard, type Card } from './card'
+import { SavedCard } from './SavedCard'
 
-type Card = { id: string; columnIndex: number; text: string }
-function isCard(value: unknown, columnCount: number): value is Card {
-  if (typeof value !== 'object' || value === null) return false
-  const card = value as Record<string, unknown>
-  return typeof card.id === 'string' && /^[0-9a-f-]{36}$/.test(card.id) &&
-    typeof card.columnIndex === 'number' && Number.isInteger(card.columnIndex) &&
-    card.columnIndex >= 0 && card.columnIndex < columnCount && typeof card.text === 'string'
-}
 
 export function WritingBoard({ session, columns, phase }: {
   session: RoomSession; columns: string[]; phase: 'writing' | 'revealed' | 'closed'
@@ -21,6 +15,8 @@ export function WritingBoard({ session, columns, phase }: {
   const [loadError, setLoadError] = useState('')
   const [attempt, setAttempt] = useState(0)
   const [pending, setPending] = useState<number | null>(null)
+  const [activeCard, setActiveCard] = useState<string | null>(null)
+  const [cardBusy, setCardBusy] = useState(false)
   const [locked, setLocked] = useState(phase !== 'writing')
   const [notice, setNotice] = useState('')
   const busy = useRef(false)
@@ -72,7 +68,7 @@ export function WritingBoard({ session, columns, phase }: {
 
   async function submit(event: FormEvent, columnIndex: number) {
     event.preventDefault()
-    if (busy.current || loading || locked || loadError) return
+    if (busy.current || activeCard || loading || locked || loadError) return
     const text = (drafts[columnIndex] ?? '').trim()
     if (!text || text.length > 2000) {
       setErrors((current) => ({ ...current, [columnIndex]: 'Write 1–2000 characters before saving.' }))
@@ -127,7 +123,7 @@ export function WritingBoard({ session, columns, phase }: {
       <p>Only you can see your saved cards during writing. Other participants and the facilitator cannot read them yet.</p>
       <p className={styles.hint}>Avoid passwords, secrets, personal data, or confidential company information.</p>
       <p className={styles.hint}>Unsent drafts stay only on this page and are lost when you reload or leave.</p>
-      <button type="button" className={styles.secondary} disabled={loading || pending !== null} onClick={() => {
+      <button type="button" className={styles.secondary} disabled={loading || pending !== null || activeCard !== null} onClick={() => {
         if (!busy.current) setAttempt((value) => value + 1)
       }}>Refresh my cards</button>
       <p role="status">{loading ? 'Loading your saved cards…' : notice}</p>
@@ -140,20 +136,28 @@ export function WritingBoard({ session, columns, phase }: {
         {!loading && !loadError && <>
           {cards.filter((card) => card.columnIndex === index).length === 0 && <p className={styles.hint}>No saved cards here yet.</p>}
           <ul className={styles.cardList} aria-label={`Your cards in column ${index + 1}`}>
-            {cards.filter((card) => card.columnIndex === index).map((card) => <li key={card.id} className={styles.card}>{card.text}</li>)}
+            {cards.filter((card) => card.columnIndex === index).map((card) => <li key={card.id} className={styles.card}>
+              <SavedCard card={card} session={session} columnCount={columns.length}
+                disabled={locked || loading || pending !== null || cardBusy || (activeCard !== null && activeCard !== card.id)}
+                onActive={(active) => setActiveCard(active ? card.id : null)}
+                onBusy={(value) => { busy.current = value; setCardBusy(value) }}
+                onAccessLost={() => setLocked(true)}
+                onUpdated={(updated) => { setCards((current) => current.map((item) => item.id === updated.id ? updated : item)); setNotice('Card updated privately.') }}
+                onDeleted={() => { setCards((current) => current.filter((item) => item.id !== card.id)); setNotice('Card deleted.') }} />
+            </li>)}
           </ul>
         </>}
         <form onSubmit={(event) => void submit(event, index)} noValidate>
           <label className={styles.draftLabel} htmlFor={`draft-${index}`}>Your thought for column {index + 1}</label>
           <textarea id={`draft-${index}`} className={styles.draft} rows={4} maxLength={2000}
-            value={drafts[index] ?? ''} disabled={pending !== null}
+            value={drafts[index] ?? ''} disabled={pending !== null || cardBusy}
             aria-invalid={!!errors[index] || undefined}
             aria-describedby={`draft-hint-${index}${errors[index] ? ` draft-error-${index}` : ''}`}
             onChange={(event) => { setDrafts((current) => ({ ...current, [index]: event.target.value }));
               setErrors((current) => ({ ...current, [index]: '' })); setNotice('') }} />
           <p id={`draft-hint-${index}`} className={styles.hint}>{(drafts[index] ?? '').length}/2000 characters</p>
           {errors[index] && <p id={`draft-error-${index}`} className={styles.error} role="alert">{errors[index]}</p>}
-          <button type="submit" className={styles.primary} disabled={pending !== null || loading || locked || !!loadError}>
+          <button type="submit" className={styles.primary} disabled={pending !== null || activeCard !== null || loading || locked || !!loadError}>
             {pending === index ? 'Saving…' : `Save card in column ${index + 1}`}
           </button>
         </form>

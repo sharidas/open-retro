@@ -6,8 +6,8 @@ need anonymous feedback without accounts, tracking, or hidden paywalls.
 The project is in early development. You can create a room with one to five
 configured columns and receive separate participant and facilitator links.
 Participants can join anonymously and facilitators can open their private room
-view. Participants can write and reload their own private cards. Card editing,
-reveal controls, and voting are not implemented yet.
+view. Participants can write, edit, delete, and reload their own private cards.
+Reveal controls and voting are not implemented yet.
 
 ## Run Locally With Docker
 
@@ -129,7 +129,13 @@ Writing-phase, expiry, and authorization errors prevent further saves while
 leaving drafts available to copy. Drafts are not stored in browser storage and
 are lost on navigation/reload; saved cards persist in SQLite. The interface warns
 against entering secrets or sensitive information and stacks columns on mobile.
-Editing and deleting cards are task 09; shared reveal is task 10.
+Use “Edit card” to change a saved card's text, or “Cancel edit” to keep the saved
+version. Deleting requires an inline confirmation and cannot be undone. The API
+permits both operations only for the owner while the room is unexpired and in
+the writing phase. Refresh is disabled while editing or confirming deletion so
+unsaved edits are not discarded. Failed edits preserve the editor text; after
+an interrupted request, cancel and refresh saved cards to check the result.
+Shared reveal is task 10. Narrow-screen verification remains pending from task 08.
 
 ## Private Card API
 
