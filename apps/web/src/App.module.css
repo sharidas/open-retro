@@ -51,6 +51,15 @@
 .cardActions { display: flex; flex-wrap: wrap; gap: 8px; white-space: normal; }
 .cardActions .secondary { font-size: .8rem; padding: 8px 10px; }
 .card .draftLabel { margin-top: 0; }
+.voteActions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; white-space: normal; }
+.voteActions button { padding: 8px 12px; font-size: .85rem; }
+.voteTotal, .voteBudget { font-weight: 700; }
+.selectedVote { border: 1px solid #203b33; border-radius: 8px; color: white; background: #203b33; }
+.viewControls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.viewControls button[aria-pressed="true"] { background: #203b33; color: white; }
+.discussion { margin-top: 28px; }
+.discussionList { list-style: none; padding: 0; }
+.topicLabel { font-size: .8rem; color: #52635a; white-space: normal; margin-top: 0; }
 .boardColumn .primary { width: 100%; font-size: .875rem; }
 @media (max-width: 480px) {
   .page { padding-inline: 16px; }

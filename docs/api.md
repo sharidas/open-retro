@@ -207,7 +207,7 @@ visits do not mount a writing board or load its private recovery state.
 
 ## Anonymous Voting
 
-The voting API is available after reveal. Voting UI controls are task 13.
+The voting API and shared-board voting controls are available after reveal.
 Participants use their existing bearer token; only its room-scoped hash is
 stored, with no voter profile, raw token, or voting timestamps. A facilitator
 secret alone cannot cast votes; facilitators can join as participants separately.
