@@ -94,6 +94,21 @@ not proof of distinct people. Client credential cleanup remains retention work.
 
 ## Privacy Boundaries
 
+Migration 0004 adds cards with room and composite participant foreign keys, plus
+a room/owner index. The card repository is composed into the existing room
+repository interface. Submission uses a parameterized `INSERT ... SELECT` that
+atomically checks phase, expiry, membership, and column existence. The API
+validates nonempty text up to 2000 characters and a valid zero-based column index.
+Private reads filter by both room and owner hash in SQL and project only card
+ID, column index, and text. They never retrieve another participant's card data.
+
+Participant card reads are currently owner-only regardless of phase; protected
+facilitator card reads return an empty list. Task 10 will add shared visibility
+after reveal. This deliberately fails closed while reveal is unavailable. No
+HTTP endpoint accepts a client-supplied owner hash or provides an individual
+card lookup in this slice. Raw tokens, owner hashes, and writing timestamps are
+not part of card responses. Cards currently store no writing timestamps.
+
 - Facilitator access and participant access must use separate secrets.
 - Participant identifiers must not be exposed in facilitator responses.
 - Stored participant tokens should be hashed rather than stored directly.

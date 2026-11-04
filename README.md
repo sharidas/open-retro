@@ -6,7 +6,8 @@ need anonymous feedback without accounts, tracking, or hidden paywalls.
 The project is in early development. You can create a room with one to five
 configured columns and receive separate participant and facilitator links.
 Participants can join anonymously and facilitators can open their private room
-view. Writing cards and voting are not implemented yet.
+view. Private card submission/retrieval is available through the API; the card
+writing interface and voting are not implemented yet.
 
 ## Run Locally With Docker
 
@@ -109,7 +110,21 @@ the stripped address does not grant access in a fresh tab. If session storage
 is blocked, access lasts only for the current page and a warning is displayed.
 Facilitator access does not create a participant session automatically. Both
 views show configured columns, phase, expiry, and a safe participant share link.
-Card submission and facilitator management controls are still later tasks.
+Card submission is now available through the API. The writing interface and
+facilitator management controls are still later tasks.
+
+## Private Card API
+
+Registered participants can submit cards with `POST /api/rooms/:id/cards` using
+their bearer token and JSON `{ "columnIndex": 0, "text": "Sprint feedback" }`.
+Column positions are zero-based. Text is trimmed and must contain 1–2000
+characters. Only active writing-phase rooms accept cards.
+
+`GET /api/rooms/:id/cards` returns only that participant's cards. Ownership is
+filtered in the database and never included in response payloads. The protected
+`GET /api/rooms/:id/facilitator/cards` returns an empty list until reveal behavior
+is implemented. The UI remains unchanged in task 07; card writing is task 08.
+See the [API notes](docs/api.md) for validation and privacy behavior.
 
 The room model accepts one to five nonempty column names, trims surrounding
 whitespace, preserves column order, and starts in the writing phase. The allowed

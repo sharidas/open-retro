@@ -156,11 +156,18 @@ Demo: create a five-column room and join it from a separate browser session.
 
 ## Milestone 3: Private Writing
 
-- [ ] **07 — Submit and retrieve private cards.** Store cards with their room,
+- [x] **07 — Submit and retrieve private cards.** Store cards with their room,
   column, and owner hash. Filter responses on the server during writing.
   Done when direct API requests prove other participants and the facilitator
   cannot retrieve someone else's card text or ownership identifiers.
   Learn: privacy boundaries and response shaping.
+  Completed with a cards migration, validated submission endpoint, owner-only
+  reads filtered in SQL, and an authenticated facilitator card endpoint that
+  returns no cards until reveal is implemented. Card responses exclude ownership
+  identifiers. Atomic insertion rechecks phase, expiry, membership, and column
+  existence. All 87 tests, TypeScript checks, production build, and a live API
+  privacy check passed. Text is capped at 2000 characters; the writing interface
+  remains task 08, editing/deletion task 09, and reveal task 10.
 - [ ] **08 — Build the writing board.** Render configured columns and allow
   participants to submit and see their own cards. Include loading/error states
   and the brief warning against entering secrets or sensitive information.

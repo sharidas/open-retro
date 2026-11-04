@@ -85,6 +85,47 @@ This does not enforce one person per participant: another browser or cleared
 storage can create a new session. Old local storage entries are not automatically
 cleared yet; retention cleanup remains task 15.
 
+## Private Cards
+
+Registered participants use `Authorization: Bearer <participant-token>` for:
+
+- `POST /api/rooms/:id/cards`: accepts only JSON fields `columnIndex` (integer,
+  zero-based position in this room) and `text` (trimmed, 1–2000 characters).
+  Returns HTTP 201 with `{ "card": { "id": "generated-uuid", "columnIndex": 0,
+  "text": "Sprint feedback" } }`.
+- `GET /api/rooms/:id/cards`: returns `{ "cards": [...] }` containing only cards
+  owned by that participant in this room. Query parameters cannot select another
+  owner. There is no single-card lookup endpoint in this slice.
+
+The server sets the ID, room, and owner hash; attempts to supply these as input
+are rejected. Cards store no raw participant token or personal profile, and
+responses include no ownership hash or participant identifier. Text is stored as
+plain data, including HTML-like input; the future UI must render it as text.
+
+Writing-phase rules are checked both at the API and within the atomic database
+insertion. The write requires a registered owner, a current writing-phase room,
+an unexpired timestamp, and a column that exists in that room. This prevents a
+phase change between initial authorization and insertion from permitting a late
+card. Migration 0004 adds cards with room/participant foreign keys and cascading
+deletion. The room/owner index supports private reads that filter ownership in
+SQL and project only safe fields.
+
+`GET /api/rooms/:id/facilitator/cards` requires the facilitator secret and returns
+`{ "cards": [] }` in this slice: no private text, counts, or ownership metadata.
+The facilitator secret does not grant participant card access. Facilitators may
+join through the participant link separately, receiving their own participant
+session with the same privacy rules as everyone else.
+
+For now, participant reads remain owner-only in every phase and facilitator
+reads remain empty. Shared card visibility after reveal is task 10. Updating
+and deleting owned cards is task 09; the writing UI is task 08.
+
+Card errors: 401 for absent/unregistered/cross-room credentials; 404 for expired
+registered rooms; 409 when writing has ended or room eligibility changes during
+submission; 400 for invalid JSON, extra fields, invalid columns, or invalid text;
+415 for non-JSON requests; 413 for bodies exceeding 16 KiB. There is no automatic
+submission deduplication yet: a repeated successful POST creates another card.
+
 ## Errors and Privacy
 
 - 400: malformed JSON or invalid room input. Error responses do not echo input.

@@ -1,4 +1,4 @@
-import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { foreignKey, index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import type { RoomState } from '../domain/room.js'
 
 export const rooms = sqliteTable('rooms', {
@@ -14,3 +14,14 @@ export const participants = sqliteTable('participants', {
   roomId: text('room_id').notNull().references(() => rooms.id, { onDelete: 'cascade' }),
   tokenHash: text('token_hash').notNull(),
 }, (table) => [primaryKey({ columns: [table.roomId, table.tokenHash] })])
+
+export const cards = sqliteTable('cards', {
+  id: text('id').primaryKey(),
+  roomId: text('room_id').notNull().references(() => rooms.id, { onDelete: 'cascade' }),
+  ownerHash: text('owner_hash').notNull(),
+  columnIndex: integer('column_index').notNull(),
+  text: text('text').notNull(),
+}, (table) => [
+  foreignKey({ columns: [table.roomId, table.ownerHash], foreignColumns: [participants.roomId, participants.tokenHash] }).onDelete('cascade'),
+  index('cards_room_owner_idx').on(table.roomId, table.ownerHash),
+])

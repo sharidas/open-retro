@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm'
 import { createRoom } from '../domain/room.js'
 import type { openDatabase } from './database.js'
 import { participants, rooms } from './schema.js'
+import { cardRepository } from './cards.js'
 
 export const ROOM_LIFETIME_MS = 24 * 60 * 60 * 1000
 // Explicit projection prevents facilitator hashes from leaking through reads.
@@ -15,6 +16,7 @@ type Database = Awaited<ReturnType<typeof openDatabase>>['db']
 
 export function roomRepository(db: Database, clock: () => number = Date.now) {
   return {
+    ...cardRepository(db, clock),
     async joinParticipant(roomId: string, tokenHash: string): Promise<void> {
       await db.insert(participants).values({ roomId, tokenHash }).onConflictDoNothing()
     },
