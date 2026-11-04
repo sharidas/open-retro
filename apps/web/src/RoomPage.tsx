@@ -3,6 +3,7 @@ import type { RoomSession } from './session'
 import { CopyLink } from './CopyLink'
 import styles from './App.module.css'
 import { WritingBoard } from './WritingBoard'
+import { SharedBoard } from './SharedBoard'
 
 type Room = { id: string; columns: string[]; state: 'writing' | 'revealed' | 'closed'; expiresAt: number }
 
@@ -75,14 +76,15 @@ export function RoomPage({ session }: { session: RoomSession }) {
           <p className={styles.hint}>Your private link was removed from the address bar. This tab remembers facilitator access; save the original link privately for future use.</p>}
         {session.storageWarning && <p className={styles.notice}>Session storage is unavailable. Facilitator access will be lost when you leave or reload; keep your original private link.</p>}
         <CopyLink label="Participant link" value={participantLink} />
-        {session.role === 'facilitator' ? <p className={styles.notice}>Cards stay private during writing, including from you. Open the participant link separately if you would like to contribute. Reveal controls and voting are coming next.</p> :
+        {room.state !== 'writing' ? <p className={styles.notice}>Writing has ended. The revealed cards are read-only; voting is coming next.</p> : session.role === 'facilitator' ? <p className={styles.notice}>Cards stay private during writing, including from you. Open the participant link separately if you would like to contribute. Reveal controls and voting are coming next.</p> :
           <p className={styles.notice}>Write, edit, or delete your own cards below. Reveal controls and voting are coming next.</p>}
       </>}
     </section>
-    {room && !loading && !error && session.role === 'participant' && <WritingBoard session={session} columns={room.columns} phase={room.state} />}
-    {room && !loading && !error && session.role === 'facilitator' && <section className={styles.board} aria-label="Retrospective columns">
+    {room && !loading && !error && room.state !== 'writing' && <SharedBoard session={session} columns={room.columns} />}
+    {room && !loading && !error && room.state === 'writing' && session.role === 'participant' && <WritingBoard session={session} columns={room.columns} phase={room.state} />}
+    {room && !loading && !error && room.state === 'writing' && session.role === 'facilitator' && <section className={styles.board} aria-label="Retrospective columns">
       {room.columns.map((name, index) => <section key={index} className={styles.boardColumn} aria-label={`Column ${index + 1}: ${name}`}>
-        <h2>{name}</h2><p className={styles.hint}>Participant cards remain hidden until reveal is available.</p>
+        <h2>{name}</h2><p className={styles.hint}>Participant cards stay hidden during writing.</p>
       </section>)}
     </section>}
   </main>

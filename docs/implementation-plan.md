@@ -200,11 +200,17 @@ Demo: use two browser sessions to demonstrate private writing and ownership.
 
 ## Milestone 4: Reveal and Shared Updates
 
-- [ ] **10 — Reveal through the facilitator API.** Implement the writing-to-
+- [x] **10 — Reveal through the facilitator API.** Implement the writing-to-
   revealed transition and reject subsequent card mutations on the server.
   Done when only a valid facilitator can reveal and participants then receive
   anonymous cards without owner identifiers.
   Learn: state transitions and server-enforced rules.
+  Completed with facilitator-only atomic reveal, shared anonymous card reads,
+  and a read-only board after room reload. Private card reads remain owner-only
+  to protect stale writing screens. All 123 tests, TypeScript checks, production
+  build, and a live privacy/reveal check passed. Browser checks confirmed shared
+  cards, no edit/write controls, manual refresh, and reload persistence. The
+  reveal button and polling remain task 11; task 08's mobile check is still pending.
 - [ ] **11 — Add reveal controls and polling.** Show facilitator controls and
   refresh board state at a bounded interval. Handle stale tabs, failures, and
   stop polling after leaving the room.

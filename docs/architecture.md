@@ -102,9 +102,9 @@ validates nonempty text up to 2000 characters and a valid zero-based column inde
 Private reads filter by both room and owner hash in SQL and project only card
 ID, column index, and text. They never retrieve another participant's card data.
 
-Participant card reads are currently owner-only regardless of phase; protected
-facilitator card reads return an empty list. Task 10 will add shared visibility
-after reveal. This deliberately fails closed while reveal is unavailable. No
+Private participant card reads remain owner-only regardless of phase; shared
+participant reads use a separate authenticated endpoint. Protected facilitator
+card reads return an empty list during writing and shared cards after reveal. No
 HTTP endpoint accepts a client-supplied owner hash or provides an individual
 card lookup in this slice. Raw tokens, owner hashes, and writing timestamps are
 not part of card responses. Cards currently store no writing timestamps.
@@ -121,6 +121,20 @@ The writing board keeps edit state local to the saved-card component and allows
 one edit/confirmation at a time. It disables refresh until that state is closed,
 preserves failed edits, and changes saved cards only after API confirmation.
 There is no optimistic concurrency version; concurrent edits are last-write-wins.
+
+Reveal authorization shares facilitator middleware with metadata/card reads.
+The reveal operation checks the domain transition and uses an atomic conditional
+update matching room ID, writing state, current facilitator hash, and expiry.
+Exactly one concurrent request can reveal a room; later requests conflict.
+Card writes already contain matching phase guards, so committed reveal freezes
+further mutations without depending on UI state.
+
+Shared card queries independently constrain room, expiry, and revealed/closed
+state, projecting only card ID, column index, and text. Stable random card IDs
+provide ordering without author grouping or writing timestamps. No migration
+was needed. The room page selects a read-only shared board from room metadata;
+stale writing views continue to use owner-only reads. Reveal controls and live
+phase synchronization remain task 11.
 
 - Facilitator access and participant access must use separate secrets.
 - Participant identifiers must not be exposed in facilitator responses.

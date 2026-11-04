@@ -299,3 +299,141 @@ it('validates edit transport and request size', async () => {
   expect((await f.app.request(path, { method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' }, body: '{' })).status).toBe(400)
   expect((await f.app.request(path, { method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({text:'A'.repeat(17000)}) })).status).toBe(413)
 })
+
+async function reveal(f: Awaited<ReturnType<typeof fixture>>, token: string | null = f.facilitator, id = f.room.id) {
+  return f.app.request(`/api/rooms/${id}/reveal`, {
+    method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+}
+
+it('reveals both participants’ cards together, without ownership fields', async () => {
+  const f = await fixture()
+  const { card: first } = await (await f.submit()).json()
+  const { card: second } = await (await f.submit({ columnIndex: 1, text: 'Other participant thought' }, f.other)).json()
+  const sharedPath = `/api/rooms/${f.room.id}/revealed-cards`
+  expect((await f.app.request(sharedPath, { headers: { Authorization: `Bearer ${f.owner}` } })).status).toBe(409)
+  expect(await (await f.read(f.facilitator, f.room.id, true)).json()).toEqual({ cards: [] })
+  const response = await reveal(f)
+  expect(response.status).toBe(200)
+  expect(response.headers.get('Cache-Control')).toBe('no-store')
+  expect(await response.json()).toEqual({ room: { ...f.room, state: 'revealed' } })
+  const expected = [first, second].sort((a, b) => a.id.localeCompare(b.id))
+  for (const token of [f.owner, f.other]) {
+    const shared = await f.app.request(sharedPath, { headers: { Authorization: `Bearer ${token}` } })
+    expect(shared.status).toBe(200)
+    expect(await shared.json()).toEqual({ cards: expected })
+  }
+  expect(await (await f.read(f.facilitator, f.room.id, true)).json()).toEqual({ cards: expected })
+  // Private-writing clients retain an owner-only endpoint, even with stale UI.
+  expect(await (await f.read()).json()).toEqual({ cards: [first] })
+})
+
+it.each([null, 'bad', 'x'.repeat(43), 'participant', 'other-room'])('rejects invalid reveal credentials: %#', async (credential) => {
+  const f = await fixture()
+  let token = credential
+  if (credential === 'participant') token = f.owner
+  if (credential === 'other-room') {
+    token = randomBytes(32).toString('base64url')
+    await f.repo.create(['Other room'], hashSecret(token))
+  }
+  expect((await reveal(f, token)).status).toBe(401)
+  expect((await f.repo.find(f.room.id))?.state).toBe('writing')
+})
+
+it('does not accept a room ID or query-string secret as reveal authorization', async () => {
+  const f = await fixture()
+  expect((await reveal(f, f.room.id)).status).toBe(401)
+  expect((await f.app.request(`/api/rooms/${f.room.id}/reveal?secret=${f.facilitator}`, { method: 'POST' })).status).toBe(401)
+  expect((await reveal(f, f.facilitator, 'missing')).status).toBe(401)
+})
+
+it('permits exactly one concurrent reveal and rejects repeated or closed-phase reveals', async () => {
+  const f = await fixture()
+  const results = await Promise.all([reveal(f), reveal(f)])
+  expect(results.map((response) => response.status).sort()).toEqual([200, 409])
+  expect((await reveal(f)).status).toBe(409)
+  await f.db.update(rooms).set({ state: 'closed' }).where(eq(rooms.id, f.room.id))
+  expect((await reveal(f)).status).toBe(409)
+})
+
+it('freezes submission, edits, and deletion after a real reveal transition', async () => {
+  const f = await fixture()
+  const { card } = await (await f.submit()).json()
+  expect((await reveal(f)).status).toBe(200)
+  expect((await f.submit()).status).toBe(409)
+  for (const method of ['PATCH', 'DELETE']) {
+    expect((await f.app.request(`/api/rooms/${f.room.id}/cards/${card.id}`, {
+      method, headers: { Authorization: `Bearer ${f.owner}`, 'Content-Type': 'application/json' },
+      ...(method === 'PATCH' ? { body: JSON.stringify({ text: 'Too late' }) } : {}),
+    })).status).toBe(409)
+  }
+  expect(await (await f.read(f.facilitator, f.room.id, true)).json()).toEqual({ cards: [card] })
+})
+
+it('keeps shared reads authenticated and scoped to the intended room', async () => {
+  const f = await fixture()
+  const { card } = await (await f.submit()).json()
+  const otherRoom = await f.repo.create(['Another room'])
+  await f.repo.joinParticipant(otherRoom.id, hashSecret(f.owner))
+  await f.submit({ columnIndex: 0, text: 'Never leak another room' }, f.owner, otherRoom.id)
+  await reveal(f)
+  const path = `/api/rooms/${f.room.id}/revealed-cards`
+  for (const token of [undefined, f.facilitator, randomBytes(32).toString('base64url')]) {
+    expect((await f.app.request(path, { headers: token ? { Authorization: `Bearer ${token}` } : {} })).status).toBe(401)
+  }
+  expect((await f.app.request(`/api/rooms/${otherRoom.id}/revealed-cards`, { headers: { Authorization: `Bearer ${f.other}` } })).status).toBe(401)
+  const response = await f.app.request(path, { headers: { Authorization: `Bearer ${f.owner}` } })
+  expect(await response.json()).toEqual({ cards: [card] })
+})
+
+it('denies reveal on expired rooms and denies shared reads after expiry', async () => {
+  const f = await fixture()
+  await f.submit()
+  await reveal(f)
+  f.expire()
+  expect((await reveal(f)).status).toBe(404)
+  expect((await f.read(f.facilitator, f.room.id, true)).status).toBe(404)
+  expect((await f.app.request(`/api/rooms/${f.room.id}/revealed-cards`, { headers: { Authorization: `Bearer ${f.owner}` } })).status).toBe(404)
+})
+
+it('atomically rechecks expiry when it changes after reveal authorization', async () => {
+  const f = await fixture()
+  const original = f.repo.revealRoom.bind(f.repo)
+  vi.spyOn(f.repo, 'revealRoom').mockImplementationOnce(async (...args) => {
+    f.expire()
+    return original(...args)
+  })
+  expect((await reveal(f)).status).toBe(409)
+  expect((await f.repo.find(f.room.id))?.state).toBe('writing')
+})
+
+it('atomically rechecks facilitator capability if it changes after initial authorization', async () => {
+  const f = await fixture()
+  const original = f.repo.revealRoom.bind(f.repo)
+  vi.spyOn(f.repo, 'revealRoom').mockImplementationOnce(async (...args) => {
+    await f.db.update(rooms).set({ facilitatorSecretHash: hashSecret('different capability') }).where(eq(rooms.id, f.room.id))
+    return original(...args)
+  })
+  expect((await reveal(f)).status).toBe(409)
+  expect((await f.repo.find(f.room.id))?.state).toBe('writing')
+})
+
+it('filters shared cards in SQL even if an earlier phase read is stale', async () => {
+  const f = await fixture()
+  await f.submit()
+  vi.spyOn(f.repo, 'find').mockResolvedValueOnce({ ...f.room, state: 'revealed' })
+  const response = await f.app.request(`/api/rooms/${f.room.id}/revealed-cards`, { headers: { Authorization: `Bearer ${f.other}` } })
+  expect(await response.json()).toEqual({ cards: [] })
+})
+
+it('persists reveal and supports empty and closed shared boards', async () => {
+  const f = await fixture()
+  expect((await reveal(f)).status).toBe(200)
+  const second = await openDatabase(f.path)
+  try {
+    expect((await roomRepository(second.db).find(f.room.id))?.state).toBe('revealed')
+    expect(await roomRepository(second.db).listRevealedCards(f.room.id)).toEqual([])
+  } finally { second.close() }
+  await f.db.update(rooms).set({ state: 'closed' }).where(eq(rooms.id, f.room.id))
+  expect(await (await f.read(f.facilitator, f.room.id, true)).json()).toEqual({ cards: [] })
+})

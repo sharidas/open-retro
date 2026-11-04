@@ -49,8 +49,8 @@ access. Secrets in query parameters are not accepted. A valid credential for an
 expired room returns HTTP 404. Rooms created before migration 0002 have no
 facilitator capability and cannot pass this check; create a new room instead.
 
-This protected metadata read establishes the access boundary. Reveal, close,
-and delete operations are deliberately left for their planned tasks. Participant
+This protected metadata read establishes the access boundary. Reveal is now
+supported below; close and room deletion remain later tasks. Participant
 joining now has separate endpoints below. The form generates separate participant and
 facilitator links. Only the latter contains a secret, encoded in its URL
 fragment. The facilitator route consumes this fragment, removes it from the
@@ -111,13 +111,14 @@ deletion. The room/owner index supports private reads that filter ownership in
 SQL and project only safe fields.
 
 `GET /api/rooms/:id/facilitator/cards` requires the facilitator secret and returns
-`{ "cards": [] }` in this slice: no private text, counts, or ownership metadata.
+`{ "cards": [] }` during writing: no private text, counts, or ownership metadata.
+After reveal it returns all cards using the same safe card fields.
 The facilitator secret does not grant participant card access. Facilitators may
 join through the participant link separately, receiving their own participant
 session with the same privacy rules as everyone else.
 
-For now, participant reads remain owner-only in every phase and facilitator
-reads remain empty. Shared card visibility after reveal is task 10. Updating
+The private participant card endpoint remains owner-only in every phase. Shared
+visibility after reveal uses the separate endpoints below. Updating
 and deleting owned cards is now supported below. The writing UI uses these endpoints, keeps
 drafts in page memory, and does not automatically retry submissions. Manual card
 refresh preserves drafts; interrupted-save feedback asks users to check saved
@@ -155,6 +156,38 @@ registered rooms; 409 when writing has ended or room eligibility changes during
 submission; 400 for invalid JSON, extra fields, invalid columns, or invalid text;
 415 for non-JSON requests; 413 for bodies exceeding 16 KiB. There is no automatic
 submission deduplication yet: a repeated successful POST creates another card.
+
+## Reveal and Shared Cards
+
+`POST /api/rooms/:id/reveal` requires `Authorization: Bearer <facilitator-secret>`
+and no request body. It transitions writing to revealed and returns HTTP 200
+with `{ "room": { ... } }`, excluding credentials. The transition validates the
+domain rule and atomically rechecks writing phase, expiry, and facilitator hash
+in SQLite. Concurrent reveals permit exactly one transition. Repeated reveals,
+closed rooms, or eligibility changes during the write return 409. Already-expired
+rooms return 404; missing, invalid, cross-room, participant, or query-string-only
+credentials return 401.
+
+After reveal, all card creation, editing, and deletion are rejected. Existing
+atomic card-write guards also prevent an already-authorized request from writing
+after the phase transition commits.
+
+- `GET /api/rooms/:id/revealed-cards` requires a participant token registered in
+  the room. Writing rooms return 409; revealed/closed rooms return all room cards.
+- `GET /api/rooms/:id/facilitator/cards` requires the facilitator secret. Writing
+  rooms return an empty list; revealed/closed rooms return all room cards.
+- Both shared responses use `{ "cards": [{ "id": "...", "columnIndex": 0,
+  "text": "..." }] }`. No owner hashes, participant identifiers, author grouping,
+  or submission timestamps are included. SQL checks phase and expiry before
+  returning shared text, independently of earlier API checks.
+- The original `GET /api/rooms/:id/cards` always remains owner-only, including
+  for stale writing screens. Expired rooms are inaccessible on every card route.
+
+The room page displays a read-only shared board after it loads revealed/closed
+metadata. Shared cards render as text with manual refresh and error/loading
+states. Open writing tabs do not automatically change yet: reload them to view
+the revealed board, saving unsent drafts elsewhere first. A facilitator reveal
+button and bounded polling are task 11; no reopening endpoint exists.
 
 ## Errors and Privacy
 

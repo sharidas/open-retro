@@ -1,14 +1,14 @@
-import { Hono, type Handler, type MiddlewareHandler } from 'hono'
+import { Hono, type MiddlewareHandler } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { z } from 'zod'
 import { createFacilitatorSecret, hashSecret, verifyFacilitatorSecret } from './domain/facilitator.js'
-import { RoomRuleError } from './domain/room.js'
+import { RoomRuleError, transitionRoom } from './domain/room.js'
 import type { roomRepository } from './storage/rooms.js'
 import type { StoredRoom } from './storage/rooms.js'
 
 // Keep HTTP routes separate from the Node.js server for future hosting adapters.
 type Rooms = ReturnType<typeof roomRepository>
-type AppEnv = { Variables: { room: StoredRoom; ownerHash: string } }
+type AppEnv = { Variables: { room: StoredRoom; ownerHash: string; facilitatorHash: string } }
 const createRoomInput = z.strictObject({
   columns: z.array(z.string().trim().min(1)).min(1).max(5),
 })
@@ -47,6 +47,12 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
   }
   app.use('/api/rooms/:id/cards', authorizeCardAccess)
   app.use('/api/rooms/:id/cards/:cardId', authorizeCardAccess)
+  app.use('/api/rooms/:id/revealed-cards', authorizeCardAccess)
+  app.get('/api/rooms/:id/revealed-cards', async (c) => {
+    const room = c.get('room')
+    if (room.state === 'writing') return c.json({ error: 'CARDS_NOT_REVEALED' }, 409)
+    return c.json({ cards: await rooms.listRevealedCards(room.id) })
+  })
 
   app.patch('/api/rooms/:id/cards/:cardId', bodyLimit({ maxSize: 16384,
     onError: (c) => c.json({ error: 'BODY_TOO_LARGE' }, 413),
@@ -127,22 +133,32 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
     return c.json({ room, facilitatorSecret: secret }, 201)
   })
 
-  // A protected metadata read proves the authorization boundary without
-  // implementing reveal, close, or delete ahead of their planned tasks.
-  const facilitatorRead: Handler<AppEnv> = async (c) => {
+  const authorizeFacilitator: MiddlewareHandler<AppEnv> = async (c, next) => {
     const secret = /^Bearer ([A-Za-z0-9_-]{43})$/.exec(c.req.header('Authorization') ?? '')?.[1]
     if (!secret) return c.json({ error: 'UNAUTHORIZED' }, 401)
     const id = c.req.param('id') ?? ''
     const hash = await rooms.findFacilitatorHash(id)
-    if (!verifyFacilitatorSecret(secret, hash)) return c.json({ error: 'UNAUTHORIZED' }, 401)
+    if (!hash || !verifyFacilitatorSecret(secret, hash)) return c.json({ error: 'UNAUTHORIZED' }, 401)
     const room = await rooms.find(id)
     if (!room || room.expiresAt <= clock()) return c.json({ error: 'ROOM_NOT_FOUND' }, 404)
-    // Until task 10 adds reveal, facilitator card reads fail closed: no text,
-    // owner hashes, counts, or other participant correlation data.
-    if (c.req.path.endsWith('/cards')) return c.json({ cards: [] })
-    return c.json({ room })
+    c.set('room', room)
+    c.set('facilitatorHash', hash)
+    await next()
   }
-  app.get('/api/rooms/:id/facilitator', facilitatorRead)
-  app.get('/api/rooms/:id/facilitator/cards', facilitatorRead)
+  app.use('/api/rooms/:id/facilitator', authorizeFacilitator)
+  app.use('/api/rooms/:id/facilitator/cards', authorizeFacilitator)
+  app.use('/api/rooms/:id/reveal', authorizeFacilitator)
+  app.get('/api/rooms/:id/facilitator', (c) => c.json({ room: c.get('room') }))
+  app.get('/api/rooms/:id/facilitator/cards', async (c) => {
+    return c.json({ cards: await rooms.listRevealedCards(c.get('room').id) })
+  })
+  app.post('/api/rooms/:id/reveal', async (c) => {
+    const room = c.get('room')
+    if (room.state !== 'writing') return c.json({ error: 'INVALID_TRANSITION' }, 409)
+    transitionRoom(room, 'revealed')
+    const revealed = await rooms.revealRoom(room.id, c.get('facilitatorHash'))
+    if (!revealed) return c.json({ error: 'ROOM_CHANGED' }, 409)
+    return c.json({ room: revealed })
+  })
   return app
 }

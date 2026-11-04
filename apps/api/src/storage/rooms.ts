@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, gt } from 'drizzle-orm'
 import { createRoom } from '../domain/room.js'
 import type { openDatabase } from './database.js'
 import { participants, rooms } from './schema.js'
@@ -17,6 +17,13 @@ type Database = Awaited<ReturnType<typeof openDatabase>>['db']
 export function roomRepository(db: Database, clock: () => number = Date.now) {
   return {
     ...cardRepository(db, clock),
+    async revealRoom(id: string, facilitatorHash: string): Promise<StoredRoom | undefined> {
+      const [room] = await db.update(rooms).set({ state: 'revealed' })
+        .where(and(eq(rooms.id, id), eq(rooms.state, 'writing'),
+          eq(rooms.facilitatorSecretHash, facilitatorHash), gt(rooms.expiresAt, clock())))
+        .returning(publicFields)
+      return room
+    },
     async joinParticipant(roomId: string, tokenHash: string): Promise<void> {
       await db.insert(participants).values({ roomId, tokenHash }).onConflictDoNothing()
     },

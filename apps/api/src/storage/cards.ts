@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { and, asc, eq, gt, sql } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, sql } from 'drizzle-orm'
 import type { openDatabase } from './database.js'
 import { cards, rooms } from './schema.js'
 
@@ -9,6 +9,14 @@ const cardFields = { id: cards.id, columnIndex: cards.columnIndex, text: cards.t
 
 export function cardRepository(db: Database, clock: () => number = Date.now) {
   return {
+    async listRevealedCards(roomId: string): Promise<PrivateCard[]> {
+      // Visibility is checked in SQL too: no caller can use a stale phase
+      // check to retrieve private writing. The projection excludes all owners.
+      return db.select(cardFields).from(cards).innerJoin(rooms, eq(cards.roomId, rooms.id))
+        .where(and(eq(cards.roomId, roomId), inArray(rooms.state, ['revealed', 'closed']),
+          gt(rooms.expiresAt, clock())))
+        .orderBy(asc(cards.id))
+    },
     async updateOwnCard(roomId: string, ownerHash: string, cardId: string, text: string): Promise<PrivateCard | undefined> {
       const result = await db.all<PrivateCard>(sql`
         UPDATE cards SET text = ${text}
