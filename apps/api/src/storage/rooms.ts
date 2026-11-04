@@ -4,6 +4,7 @@ import { createRoom } from '../domain/room.js'
 import type { openDatabase } from './database.js'
 import { participants, rooms } from './schema.js'
 import { cardRepository } from './cards.js'
+import { voteRepository } from './votes.js'
 
 export const ROOM_LIFETIME_MS = 24 * 60 * 60 * 1000
 // Explicit projection prevents facilitator hashes from leaking through reads.
@@ -17,6 +18,7 @@ type Database = Awaited<ReturnType<typeof openDatabase>>['db']
 export function roomRepository(db: Database, clock: () => number = Date.now) {
   return {
     ...cardRepository(db, clock),
+    ...voteRepository(db, clock),
     async revealRoom(id: string, facilitatorHash: string): Promise<StoredRoom | undefined> {
       const [room] = await db.update(rooms).set({ state: 'revealed' })
         .where(and(eq(rooms.id, id), eq(rooms.state, 'writing'),

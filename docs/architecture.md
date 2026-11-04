@@ -152,6 +152,30 @@ when it was already open, preserving draft/editor state for copying. Its recover
 section is private and hidden if empty; submissions and mutation controls stop.
 Shared cards use their own endpoint and component, with no ownership metadata.
 
+## Voting Persistence and Privacy
+
+Migration 0005 introduces votes with composite room/participant and room/card
+foreign keys. A room/card unique index supports the card foreign key. Votes are
+unique per room/voter/card and occupy one of three unique room/voter slots,
+with a database check restricting slots to 1–3. This bounds the budget even if
+concurrent requests or a future caller bypass application count checks.
+
+The vote repository uses the existing local libSQL client's write-mode batch:
+the conditional insert/delete and result snapshot commit or roll back together.
+The insert chooses a free slot only if the room is revealed, unexpired, and the
+participant/card belong to it. Repeated PUT/DELETE operations are idempotent.
+No interactive count-then-insert transaction is needed, and competing database
+connections cannot overspend the budget. The SQL/transaction implementation is
+local SQLite-specific behind the repository interface; other deployment targets
+must provide equivalent guarantees.
+
+Participant reads aggregate totals and only their own selections in one query;
+remaining budget is derived from those selections. Facilitator reads project
+card IDs and totals only. No voter hashes, participant lists, or voting timestamps
+are exposed. Closed rooms retain read-only snapshots, while vote changes require
+revealed state. Voting for one's own cards is allowed. UI controls, totals, and
+discussion ordering remain task 13.
+
 - Facilitator access and participant access must use separate secrets.
 - Participant identifiers must not be exposed in facilitator responses.
 - Stored participant tokens should be hashed rather than stored directly.

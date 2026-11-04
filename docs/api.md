@@ -205,6 +205,52 @@ immediately and saved private cards are not duplicated in this section. Only
 the submitted card contents appear on the shared board. Initial revealed-room
 visits do not mount a writing board or load its private recovery state.
 
+## Anonymous Voting
+
+The voting API is available after reveal. Voting UI controls are task 13.
+Participants use their existing bearer token; only its room-scoped hash is
+stored, with no voter profile, raw token, or voting timestamps. A facilitator
+secret alone cannot cast votes; facilitators can join as participants separately.
+
+- `PUT /api/rooms/:id/cards/:cardId/vote` ensures the caller has one vote on the
+  card. There is no toggle POST: retries must not flip state or add votes.
+- `DELETE /api/rooms/:id/cards/:cardId/vote` ensures the caller has no vote on
+  the card, leaving everyone else's votes untouched. Removing an absent vote
+  succeeds without changing totals.
+- Both return HTTP 200 with `{ "vote": { "cardId": "...", "total": 1,
+  "selected": true }, "remainingVotes": 2, "voteLimit": 3 }`. The `selected`
+  flag and remaining budget describe only the caller. Request bodies are not
+  used to select a voter, room, vote slot, or budget.
+
+Each participant has three votes per room, at most one per card. Voting for your
+own cards is allowed. Removing a vote frees a slot. Retrying a selected card at
+the budget limit still succeeds; selecting a fourth distinct card returns 409
+with `{ "error": "VOTE_BUDGET_EXCEEDED", "voteLimit": 3 }`.
+
+`GET /api/rooms/:id/votes` returns `{ "votes": [{ "cardId": "...", "total": 1,
+"selected": true }], "remainingVotes": 2, "voteLimit": 3 }`, including zero-count
+cards. `GET /api/rooms/:id/facilitator/votes` requires the facilitator secret and
+returns only `{ "votes": [{ "cardId": "...", "total": 1 }] }`. It does not
+expose selections, voter hashes, per-participant budgets, or a participant list.
+Both routes allow revealed/closed rooms and reject writing rooms with 409.
+
+Mutations require an active, unexpired revealed room and a card in that room.
+Writing/closed rooms return 409; expired registered rooms return 404. Missing,
+malformed, unregistered, or wrong-role credentials return 401. A card from another
+room and a nonexistent card return the same 404. The write transaction rechecks
+phase, expiry, card membership, and voter membership; eligibility changes after
+the API check also return 404 without a mutation.
+
+Migration 0005 uses composite participant/card foreign keys, per-card uniqueness,
+and three unique numbered slots per room/voter. Even direct writes cannot create
+a fourth slot. The local driver executes the change and result queries in a
+write-mode batch transaction, avoiding a read-count/write race and keeping the
+returned budget/totals consistent. The budget constant and slot constraint must
+be migrated together if the three-vote policy changes. Vote rows cascade away
+with their card, participant, or room. Browser identity limitations remain the
+same as anonymous joining: a token represents a browser session, not proof of
+a distinct person.
+
 ## Errors and Privacy
 
 - 400: malformed JSON or invalid room input. Error responses do not echo input.
