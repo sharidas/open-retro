@@ -8,7 +8,7 @@ configured columns and receive separate participant and facilitator links.
 Participants can join anonymously and facilitators can open their private room
 view. Participants can write, edit, delete, and reload their own private cards.
 Facilitators can reveal cards and open room views update automatically. Voting
-is not implemented yet.
+is available through the API; voting controls and totals in the UI are task 13.
 
 ## Run Locally With Docker
 
@@ -31,6 +31,7 @@ Source files are mounted from your checkout: edit `apps/web/src` or
 `apps/api/src` and the development servers reload automatically. After changing
 dependencies, TypeScript configuration, or Docker configuration, rebuild with
 `docker compose up --build`. This container is for development, not production.
+Rerun that command after switching branches to refresh the container and mounts.
 
 Run verification inside the running container:
 
@@ -181,6 +182,26 @@ Authorization failures and unavailable rooms stop automatic checks. Requests
 time out after 15 seconds and do not overlap. Reveal requests are not retried
 automatically; an interrupted request triggers a status check instead. A stale
 writing response cannot undo a confirmed revealed or closed phase.
+
+## Anonymous Voting API
+
+After reveal, registered participants can use `PUT /api/rooms/:id/cards/:cardId/vote`
+to select a card and `DELETE` on the same path to remove their vote. Both use the
+participant bearer token, take no voting data from the body, and are idempotent:
+repeated requests do not add duplicates or affect anyone else's votes.
+
+Each participant has three votes per room, at most one per card. Participants
+may vote for their own cards. Removing a vote restores one available vote.
+Writing, closed, and expired rooms reject vote changes. Participant snapshots
+come from `GET /api/rooms/:id/votes`; facilitator totals come from the protected
+`GET /api/rooms/:id/facilitator/votes`. Only the participant sees their own
+selections and remaining budget; facilitators receive card totals without voter
+identifiers. Voting buttons and discussion ordering are task 13.
+
+Migration 0005 adds room-scoped votes with participant/card foreign keys, one
+vote per participant/card, and three unique vote slots per participant/room.
+The slot constraints prevent overspending even under concurrent requests. Each
+change and its returned snapshot run in a single local SQLite write transaction.
 
 The room model accepts one to five nonempty column names, trims surrounding
 whitespace, preserves column order, and starts in the writing phase. The allowed

@@ -1,4 +1,4 @@
-import { foreignKey, index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { foreignKey, index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 import type { RoomState } from '../domain/room.js'
 
 export const rooms = sqliteTable('rooms', {
@@ -24,4 +24,18 @@ export const cards = sqliteTable('cards', {
 }, (table) => [
   foreignKey({ columns: [table.roomId, table.ownerHash], foreignColumns: [participants.roomId, participants.tokenHash] }).onDelete('cascade'),
   index('cards_room_owner_idx').on(table.roomId, table.ownerHash),
+  uniqueIndex('cards_room_id_unique').on(table.roomId, table.id),
+])
+
+export const votes = sqliteTable('votes', {
+  roomId: text('room_id').notNull(),
+  voterHash: text('voter_hash').notNull(),
+  cardId: text('card_id').notNull(),
+  slot: integer('slot').notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.roomId, table.voterHash, table.cardId] }),
+  foreignKey({ columns: [table.roomId, table.voterHash], foreignColumns: [participants.roomId, participants.tokenHash] }).onDelete('cascade'),
+  foreignKey({ columns: [table.roomId, table.cardId], foreignColumns: [cards.roomId, cards.id] }).onDelete('cascade'),
+  uniqueIndex('votes_room_voter_slot_unique').on(table.roomId, table.voterHash, table.slot),
+  index('votes_room_card_idx').on(table.roomId, table.cardId),
 ])

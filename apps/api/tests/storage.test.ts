@@ -67,6 +67,7 @@ describe('SQLite room persistence', () => {
       { name: '0002_facilitator_secret.sql' },
       { name: '0003_participants.sql' },
       { name: '0004_cards.sql' },
+      { name: '0005_votes.sql' },
     ])
   })
 

@@ -232,11 +232,18 @@ Demo: reveal once and watch both participant boards update.
 
 ## Milestone 5: Vote and Finish
 
-- [ ] **12 — Implement anonymous voting.** Enforce phase, room membership,
+- [x] **12 — Implement anonymous voting.** Enforce phase, room membership,
   per-card uniqueness, and the vote budget using database constraints and
   transactions. Test repeated and concurrent requests.
   Done when duplicate requests cannot inflate votes or exceed the budget.
   Learn: constraints, transactions, and concurrency.
+  Completed with idempotent PUT/DELETE voting, three room-scoped vote slots,
+  composite foreign keys, and transactional result snapshots. Participants see
+  totals plus their own selections/budget; facilitators see only totals. All 156
+  tests (including 21 voting tests), type checks, production build, and a live
+  concurrency/privacy check passed. Independent database connections cannot
+  overspend the budget. Voting controls and discussion ordering remain task 13;
+  task 08's narrow-screen check remains pending.
 - [ ] **13 — Build voting and discussion views.** Show vote totals, remaining
   votes, and a way to prioritize most-voted cards without exposing voters.
   Done when participants can add/remove their own votes and see shared totals.
