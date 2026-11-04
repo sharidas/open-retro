@@ -112,12 +112,19 @@ Demo: open the app, reach the API, and verify that room data persists.
 
 ## Milestone 2: Create and Join a Room
 
-- [ ] **04 — Create rooms through the API.** Generate unguessable room IDs and
+- [x] **04 — Create rooms through the API.** Generate unguessable room IDs and
   a separate facilitator secret; store only its hash. Return the raw secret only
   on creation. Reject invalid column configurations on the server.
   Done when creation works and invalid or missing facilitator credentials cannot
   authorize privileged operations.
   Learn: API contracts and capability-based access.
+  Completed with validated `POST /api/rooms`, a one-time 256-bit facilitator
+  secret, stored SHA-256 hashes, and a protected facilitator metadata endpoint.
+  Migration 0002 preserves legacy rooms without granting facilitator access.
+  Missing, invalid, cross-room, and expired access are rejected; metadata reads
+  omit secrets/hashes. All 55 tests, TypeScript checks, production build, and a
+  live Vite-to-API creation/authorization check passed. Reveal, close, deletion,
+  participant joining, and rate limiting remain their planned tasks.
 - [ ] **05 — Build the creation screen.** Add room creation with editable column
   names, adding/removing columns up to five, and clear validation messages.
   Done when the UI creates a room and displays separate participant and

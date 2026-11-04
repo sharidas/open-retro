@@ -55,7 +55,7 @@ keeps the API small and supports a future Cloudflare adapter. CSS Modules scope
 styles to components. Room rules live in `apps/api/src/domain/room.ts`, separate
 from HTTP and storage. Vitest checks them in `apps/api/tests/room.test.ts` without
 starting a server or database. Database tests use temporary SQLite files that
-are removed afterward. API request validation arrives later.
+are removed afterward. API tests exercise HTTP requests against temporary databases.
 
 ## Local Room Storage
 
@@ -77,15 +77,17 @@ the Docker build context.
 
 `apps/api/src/storage/rooms.ts` provides create/read operations, validating room
 rules before saving. New rooms receive a random UUID and expire 24 hours after
-creation; timestamps are Unix milliseconds. Public creation endpoints and
-facilitator secrets are task 04. Expiry enforcement and cleanup are task 15;
-the storage lookup currently returns expired records too. The UI is unchanged.
+creation; timestamps are Unix milliseconds. The creation API stores a separate
+facilitator secret hash; ordinary storage reads exclude it. General expiry
+enforcement and cleanup are task 15; the storage lookup currently returns expired
+records too. The protected facilitator endpoint already denies expired rooms.
+The UI is unchanged; the creation screen comes in task 05.
 
 The room model accepts one to five nonempty column names, trims surrounding
 whitespace, preserves column order, and starts in the writing phase. The allowed
 sequence is `writing → revealed → closed`; skipping, reopening, and repeating
-transitions fail. These are domain rules only for now: HTTP endpoints and
-facilitator authorization will be added in later tasks. Column names/order are
+transitions fail. Creation validates these column rules on the server; lifecycle
+mutation endpoints will be added in later tasks. Column names/order are
 fixed at creation for the MVP. Duplicate names are currently allowed.
 
 Development runs locally. The public deployment must stay within a $0 budget:
@@ -142,6 +144,7 @@ See:
 - [MVP plan](docs/mvp.md)
 - [Step-by-step implementation plan](docs/implementation-plan.md)
 - [Architecture notes](docs/architecture.md)
+- [Room API and facilitator access](docs/api.md)
 
 ## License
 

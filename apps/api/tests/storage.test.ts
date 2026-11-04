@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { createClient } from '@libsql/client'
+import { pathToFileURL } from 'node:url'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { sql } from 'drizzle-orm'
@@ -24,6 +26,23 @@ async function fixture() {
 }
 
 describe('SQLite room persistence', () => {
+  it('upgrades the previous schema without losing existing rooms', async () => {
+    const folder = await mkdtemp(join(tmpdir(), 'open-retro-upgrade-'))
+    cleanup.push(() => rm(folder, { recursive: true, force: true }))
+    const path = join(folder, 'rooms.sqlite')
+    const old = createClient({ url: pathToFileURL(path).href })
+    try {
+      await old.executeMultiple(await readFile(new URL('../migrations/0001_rooms.sql', import.meta.url), 'utf8'))
+      await old.execute('CREATE TABLE schema_migrations (name TEXT PRIMARY KEY NOT NULL)')
+      await old.execute("INSERT INTO schema_migrations VALUES ('0001_rooms.sql')")
+      await old.execute(`INSERT INTO rooms VALUES ('legacy', '["A"]', 'writing', 1, 2)`)
+    } finally { old.close() }
+    const upgraded = await openDatabase(path)
+    cleanup.push(upgraded.close)
+    const repo = roomRepository(upgraded.db)
+    expect(await repo.find('legacy')).toEqual({ id: 'legacy', columns: ['A'], state: 'writing', createdAt: 1, expiresAt: 2 })
+    expect(await repo.findFacilitatorHash('legacy')).toBeNull()
+  })
   it('round-trips normalized columns, writing state, and expiry timestamps', async () => {
     const { db } = await fixture()
     const now = 1_800_000_000_000
@@ -43,8 +62,9 @@ describe('SQLite room persistence', () => {
     const second = await openDatabase(first.path)
     cleanup.push(second.close)
     expect(await roomRepository(second.db).find(room.id)).toEqual(room)
-    expect(await second.db.all(sql`SELECT name FROM schema_migrations`)).toEqual([
+    expect(await second.db.all(sql`SELECT name FROM schema_migrations ORDER BY name`)).toEqual([
       { name: '0001_rooms.sql' },
+      { name: '0002_facilitator_secret.sql' },
     ])
   })
 

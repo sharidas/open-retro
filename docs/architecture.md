@@ -64,8 +64,17 @@ must be kept consistent with it. Never modify a migration already applied.
 
 Docker Compose persists the database in a named volume. Connection/migration
 failures prevent API startup. API shutdown closes the database connection.
-Public room creation and facilitator capabilities are intentionally deferred
-to task 04; no storage-only HTTP endpoints are exposed.
+Migration 0002 adds a nullable facilitator secret hash, preserving existing
+local rooms without inventing recoverable credentials. New API-created rooms
+store a SHA-256 hash of a random 256-bit capability. Repository metadata reads
+explicitly project public fields to exclude hashes. See [API notes](api.md).
+
+`createApp` receives the room repository as a dependency, allowing HTTP tests to
+use temporary databases. Creation validates JSON with Zod and domain rules before
+insertion. The creation response alone returns the raw facilitator secret.
+A protected facilitator metadata endpoint validates bearer credentials and
+denies expired rooms; lifecycle mutation endpoints and participant access remain
+later tasks. The API does not expose storage-only or secret-recovery endpoints.
 
 ## Privacy Boundaries
 
