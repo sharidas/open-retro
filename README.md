@@ -37,7 +37,7 @@ docker compose exec dev npm test
 docker compose exec dev npm run build
 ```
 
-`check` validates TypeScript, including the API tests; `test` runs the room-rule
+`check` validates TypeScript, including the API tests; `test` runs the room-rule and database
 tests once using Vitest; `build` compiles the API and bundles the frontend.
 Neither installs anything on your machine. Container dependencies and build
 outputs stay inside the container.
@@ -54,7 +54,32 @@ React/Vite provide the interactive UI and fast feedback while editing. Hono
 keeps the API small and supports a future Cloudflare adapter. CSS Modules scope
 styles to components. Room rules live in `apps/api/src/domain/room.ts`, separate
 from HTTP and storage. Vitest checks them in `apps/api/tests/room.test.ts` without
-starting a server or database. SQLite and API request validation arrive later.
+starting a server or database. Database tests use temporary SQLite files that
+are removed afterward. API request validation arrives later.
+
+## Local Room Storage
+
+SQLite stores room IDs, configured columns, lifecycle phase, creation time, and
+expiry time. Drizzle handles typed queries through the local libSQL SQLite
+driver; it does not connect to a hosted database or require an account.
+
+On API startup, numbered SQL files in `apps/api/migrations` run in order.
+`schema_migrations` records which have succeeded, so restarting does not reapply
+them. Each migration is transactional: its changes and completion record commit
+together or roll back together. Add a new migration for future schema changes;
+do not edit an applied one. A migration is a versioned change to database tables.
+
+Compose sets `DATABASE_PATH=/app/data/open-retro.sqlite` and stores `/app/data`
+in the `retro-data` Docker volume. This data survives restarts, rebuilds, and
+`docker compose down`. Removing the volume (for example with `down -v`) deletes
+the stored data. Database files and their sidecars are excluded from Git and
+the Docker build context.
+
+`apps/api/src/storage/rooms.ts` provides create/read operations, validating room
+rules before saving. New rooms receive a random UUID and expire 24 hours after
+creation; timestamps are Unix milliseconds. Public creation endpoints and
+facilitator secrets are task 04. Expiry enforcement and cleanup are task 15;
+the storage lookup currently returns expired records too. The UI is unchanged.
 
 The room model accepts one to five nonempty column names, trims surrounding
 whitespace, preserves column order, and starts in the writing phase. The allowed

@@ -47,6 +47,26 @@ functions return a new room rather than modifying the input. A typed
 Authorization belongs to later API work; knowing a valid transition does not
 grant permission to perform it.
 
+## Local Persistence
+
+The SQLite adapter is in `apps/api/src/storage`. Drizzle queries use the local
+libSQL driver, with no remote service. The room repository validates creation
+through the domain model and stores random UUID IDs, columns as JSON, state,
+and creation/expiry timestamps in Unix milliseconds. The initial lifetime is
+24 hours. Reads return stored records, including expired ones; access denial
+and physical cleanup belong to task 15 before public release.
+
+Ordered SQL migrations run transactionally at startup and are recorded in
+`schema_migrations`. The first migration creates `rooms` with state, JSON array
+length, and timestamp constraints plus an expiry index. The TypeScript schema
+describes queries; SQL migrations are the source of database constraints and
+must be kept consistent with it. Never modify a migration already applied.
+
+Docker Compose persists the database in a named volume. Connection/migration
+failures prevent API startup. API shutdown closes the database connection.
+Public room creation and facilitator capabilities are intentionally deferred
+to task 04; no storage-only HTTP endpoints are exposed.
+
 ## Privacy Boundaries
 
 - Facilitator access and participant access must use separate secrets.

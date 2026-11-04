@@ -96,10 +96,17 @@ storage can create another participant. Document this limitation clearly.
   writing-to-revealed and revealed-to-closed transitions are allowed. Vitest
   runs inside Docker; all 28 tests, TypeScript checks, and the production build
   passed. HTTP integration and facilitator authorization remain later tasks.
-- [ ] **03 — Add persistent rooms.** Introduce a SQLite schema and migration,
+- [x] **03 — Add persistent rooms.** Introduce a SQLite schema and migration,
   create/read operations, and expiration timestamps.
   Done when a saved room survives an API restart.
   Learn: databases, migrations, and persistence boundaries.
+  Completed with Drizzle/local libSQL SQLite storage, a transactional initial
+  migration, validated create/read operations, random room IDs, and creation/
+  expiry timestamps. Docker persists the database in a named volume. All 34
+  tests (including six storage tests), TypeScript checks, and production builds
+  passed. A temporary room survived a real container/API restart; the health
+  endpoint remained reachable afterward. HTTP room access, facilitator secrets,
+  and expiry enforcement remain assigned to later tasks.
 
 Demo: open the app, reach the API, and verify that room data persists.
 
