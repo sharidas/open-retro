@@ -73,7 +73,7 @@ explicitly project public fields to exclude hashes. See [API notes](api.md).
 use temporary databases. Creation validates JSON with Zod and domain rules before
 insertion. The creation response alone returns the raw facilitator secret.
 A protected facilitator metadata endpoint validates bearer credentials and
-denies expired rooms; lifecycle mutation endpoints remain later tasks. The API
+denies expired rooms. Reveal and closure use the same capability boundary. The API
 does not expose storage-only or secret-recovery endpoints.
 
 Migration 0003 adds participant token hashes keyed by room, with cascading room
@@ -199,3 +199,17 @@ hosting provider. Later deployment targets may include:
 - Cloudflare Workers, Durable Objects, D1, and Pages for a free public hosted
   edition.
 - Docker Compose, a portable backend, and PostgreSQL for self-hosting.
+
+## Room Closure
+
+Closure uses a conditional SQLite update from revealed to closed, rechecking the
+facilitator hash and expiry in the write. The update returns only public fields.
+Card writes already require writing phase and vote transactions require revealed
+phase, so closure freezes both without changing the schema. Competing closes
+cannot both succeed. Existing shared reads allow closed rooms until expiry.
+
+The facilitator confirms closure explicitly. The control guards duplicate clicks,
+times out after 15 seconds, and refreshes metadata after uncertain responses
+without automatically replaying the request. Existing room polling propagates
+closure to participants. The voting view reloads the final snapshot when phase
+changes and disables mutations while preserving selections and discussion views.

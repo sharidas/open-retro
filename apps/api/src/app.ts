@@ -167,6 +167,7 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
   app.use('/api/rooms/:id/facilitator/cards', authorizeFacilitator)
   app.use('/api/rooms/:id/facilitator/votes', authorizeFacilitator)
   app.use('/api/rooms/:id/reveal', authorizeFacilitator)
+  app.use('/api/rooms/:id/close', authorizeFacilitator)
   app.get('/api/rooms/:id/facilitator', (c) => c.json({ room: c.get('room') }))
   app.get('/api/rooms/:id/facilitator/votes', async (c) => {
     const room = c.get('room')
@@ -183,6 +184,14 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
     const revealed = await rooms.revealRoom(room.id, c.get('facilitatorHash'))
     if (!revealed) return c.json({ error: 'ROOM_CHANGED' }, 409)
     return c.json({ room: revealed })
+  })
+  app.post('/api/rooms/:id/close', async (c) => {
+    const room = c.get('room')
+    if (room.state !== 'revealed') return c.json({ error: 'INVALID_TRANSITION' }, 409)
+    transitionRoom(room, 'closed')
+    const closed = await rooms.closeRoom(room.id, c.get('facilitatorHash'))
+    if (!closed) return c.json({ error: 'ROOM_CHANGED' }, 409)
+    return c.json({ room: closed })
   })
   return app
 }

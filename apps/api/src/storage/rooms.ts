@@ -26,6 +26,13 @@ export function roomRepository(db: Database, clock: () => number = Date.now) {
         .returning(publicFields)
       return room
     },
+    async closeRoom(id: string, facilitatorHash: string): Promise<StoredRoom | undefined> {
+      const [room] = await db.update(rooms).set({ state: 'closed' })
+        .where(and(eq(rooms.id, id), eq(rooms.state, 'revealed'),
+          eq(rooms.facilitatorSecretHash, facilitatorHash), gt(rooms.expiresAt, clock())))
+        .returning(publicFields)
+      return room
+    },
     async joinParticipant(roomId: string, tokenHash: string): Promise<void> {
       await db.insert(participants).values({ roomId, tokenHash }).onConflictDoNothing()
     },
