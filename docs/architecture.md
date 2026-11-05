@@ -228,3 +228,23 @@ original column order. Authenticated metadata and transition responses project
 these colours alongside names. All writing and shared board views use the same
 allowlisted palette mapping. Templates need no database entity: the room stores
 the customised result. A future template change will not alter existing rooms.
+
+## Mood Check-in
+
+Migration 0007 adds `rooms.check_in` (off/open/complete) and one mood per
+room/participant hash, with a composite cascading participant foreign key and a
+five-value database constraint. There are no mood timestamps or card references.
+Existing rooms use off. An open check-in gates the writing state; the original
+writing/revealed/closed state constraint does not need a destructive table rebuild.
+
+Card writes and reveal recheck this gate in SQL. A facilitator-only conditional
+update completes check-in; concurrent answers and starts are serialized by SQLite
+write transactions. Once complete, answers freeze and aggregates become visible.
+Reads select only the caller's answer and conditionally aggregated totals. The
+facilitator projection omits individual selections entirely.
+
+The web client uses bounded visible-tab polling during check-in, request timeouts,
+version guards for stale reads, and a full read after each mutation, including
+uncertain results. Mutations are never replayed automatically. Room metadata
+acceptance cannot regress complete check-in to open. Completed counts do not need
+recurring polling; room metadata continues enforcing expiry and availability.

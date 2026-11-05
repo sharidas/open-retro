@@ -1,3 +1,4 @@
+import { MoodCheckIn } from './MoodCheckIn'
 import { columnStyle } from './templates'
 import { useEffect, useState } from 'react'
 import type { RoomSession } from './session'
@@ -13,7 +14,7 @@ export function RoomPage({ session }: { session: RoomSession }) {
   const { room, error, loading, terminal, refresh, acceptRoom } = useRoom(session)
   const [retainWriting, setRetainWriting] = useState(false)
   const [hasUnsentWriting, setHasUnsentWriting] = useState(false)
-  useEffect(() => { if (room?.state === 'writing') setRetainWriting(true) }, [room?.state])
+  useEffect(() => { if (room?.state === 'writing' && room.checkIn !== 'open') setRetainWriting(true) }, [room?.state, room?.checkIn])
   const participantLink = new URL(`/rooms/${session.id}`, location.origin).href
   const available = !error && !terminal
 
@@ -30,7 +31,7 @@ export function RoomPage({ session }: { session: RoomSession }) {
     {room && <>
       <section className={styles.roomToolbar} aria-label="Room toolbar">
         <p className={styles.phaseBadge} role="status"><span className={styles.phaseDot} />
-          {room.state === 'writing' ? 'Private writing' : room.state === 'revealed' ? 'Vote & discuss' : 'Retro closed'}</p>
+          {room.checkIn === 'open' ? 'Mood check-in' : room.state === 'writing' ? 'Private writing' : room.state === 'revealed' ? 'Vote & discuss' : 'Retro closed'}</p>
         <p className={styles.phaseHint}>{room.state === 'writing' ? 'Space for every perspective.' : room.state === 'revealed' ? 'Find the themes. Decide what comes next.' : 'Your final board, saved until expiry.'}</p>
         <details name="room-toolbar" className={styles.toolbarDetails}>
           <summary>Invite team</summary>
@@ -47,15 +48,17 @@ export function RoomPage({ session }: { session: RoomSession }) {
       </section>
       {room.state === 'closed' && <p className={styles.notice}>This retrospective is closed. The final board is read-only.</p>}
     </>}
+    {room && room.checkIn && room.checkIn !== 'off' && !terminal &&
+      <MoodCheckIn session={session} checkIn={room.checkIn} available={available} onRoom={acceptRoom} onRefresh={refresh} />}
     {room?.state === 'revealed' && session.role === 'facilitator' &&
       <CloseControl session={session} disabled={!available} onClosed={acceptRoom} onRefresh={refresh} />}
     {room && room.state !== 'writing' && !terminal && <SharedBoard session={session} columns={room.columns} columnColors={room.columnColors}
       phase={room.state} available={available} onRoomRefresh={refresh} />}
-    {room && session.role === 'participant' && (room.state === 'writing' || retainWriting) &&
+    {room && room.checkIn !== 'open' && session.role === 'participant' && (room.state === 'writing' || retainWriting) &&
       <div className={styles.writingRecovery} hidden={room.state !== 'writing' && !hasUnsentWriting}>
         <WritingBoard session={session} columns={room.columns} columnColors={room.columnColors} phase={room.state} available={available} onLocalWork={setHasUnsentWriting} />
       </div>}
-    {room && room.state === 'writing' && session.role === 'facilitator' && <>
+    {room && room.checkIn !== 'open' && room.state === 'writing' && session.role === 'facilitator' && <>
       <RevealControl session={session} disabled={!available} onRevealed={acceptRoom} onRefresh={refresh} />
       <section className={styles.board} aria-label="Retrospective columns">
         {room.columns.map((name, index) => <section key={index} className={styles.boardColumn} style={columnStyle(room.columnColors?.[index], index)} aria-label={`Column ${index + 1}: ${name}`}>

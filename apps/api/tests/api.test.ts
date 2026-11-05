@@ -41,7 +41,7 @@ describe('room creation API', () => {
     expect(response.headers.get('Cache-Control')).toBe('no-store')
     const body = await response.json()
     expect(Object.keys(body).sort()).toEqual(['facilitatorSecret', 'room'])
-    expect(Object.keys(body.room).sort()).toEqual(['columnColors', 'columns', 'createdAt', 'expiresAt', 'id', 'state'])
+    expect(Object.keys(body.room).sort()).toEqual(['checkIn', 'columnColors', 'columns', 'createdAt', 'expiresAt', 'id', 'state'])
     expect(body.room.columns).toEqual(['Went well', 'Improve'])
     expect(body.room.state).toBe('writing')
     expect(body.room.id).toMatch(/^[0-9a-f-]{36}$/)

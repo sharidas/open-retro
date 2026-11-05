@@ -11,6 +11,7 @@ type CreatedRoom = { participantLink: string; facilitatorLink: string; expiresAt
 
 export function App() {
   const [columns, setColumns] = useState<Column[]>(templates[0].columns.map((name, index) => ({ id: index + 1, name, color: templates[0].colors[index] })))
+  const [moodCheckIn, setMoodCheckIn] = useState(true)
   const [selectedTemplate, setSelectedTemplate] = useState<string>('classic')
   function selectTemplate(id: string) {
     const template = templates.find(item => item.id === id)
@@ -44,7 +45,7 @@ export function App() {
     try {
       const response = await fetch('/api/rooms', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ columns: columns.map((column) => column.name.trim()), columnColors: columns.map(column => column.color) }),
+        body: JSON.stringify({ columns: columns.map((column) => column.name.trim()), columnColors: columns.map(column => column.color), moodCheckIn }),
         signal: controller.signal,
       })
       if (!response.ok) {
@@ -90,7 +91,7 @@ export function App() {
         <CopyLink label="Facilitator link" value={created.facilitatorLink} />
       </div>
       <p className={styles.hint}>Links are kept only on this page. Save them before refreshing. Room expiry: {new Date(created.expiresAt).toLocaleString()} (your local time).</p>
-      <p className={styles.notice}>Open the participant room to write private cards. Your facilitator can reveal them when everyone is ready, then the team can vote and discuss.</p>
+      <p className={styles.notice}>Open the participant room to join. If check-in is enabled, your facilitator starts writing after the mood check. Then write private cards, reveal, vote, and discuss.</p>
       <p><a href={created.participantLink}>Open participant room</a> · <a href={created.facilitatorLink}>Open facilitator room</a></p>
       <button type="button" className={styles.secondary} onClick={() => { setCreated(null); setError('') }}>Create another room</button>
     </section> : <section className={styles.panel} aria-labelledby="create-heading">
@@ -153,6 +154,9 @@ export function App() {
             <span className={styles.hint} role="status">{columns.length} of 5 columns</span>
           </div>
           <p className={styles.hint}>Avoid passwords, secrets, personal data, or confidential company information.</p>
+          <label className={styles.checkInOption}><input type="checkbox" checked={moodCheckIn} onChange={event => setMoodCheckIn(event.target.checked)} />
+            Begin with an optional team mood check-in</label>
+          <p className={styles.hint}>The facilitator starts writing after check-in. Participants can skip sharing a mood.</p>
           <button type="submit" className={styles.primary}>{pending ? 'Creating room…' : 'Create retrospective'}</button>
         </fieldset>
         <div aria-live="polite">{pending && <p>Creating your room…</p>}</div>

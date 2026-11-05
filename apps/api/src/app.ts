@@ -1,3 +1,4 @@
+import { MOODS } from './storage/moods.js'
 import { Hono, type Handler, type MiddlewareHandler } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { z } from 'zod'
@@ -13,6 +14,7 @@ type Rooms = ReturnType<typeof roomRepository>
 type AppEnv = { Variables: { room: StoredRoom; ownerHash: string; facilitatorHash: string } }
 const createRoomInput = z.strictObject({
   columns: z.array(z.string().trim().min(1)).min(1).max(5),
+  moodCheckIn: z.boolean().optional(),
   columnColors: z.array(z.enum(COLUMN_COLORS)).min(1).max(5).optional(),
 }).refine(value => value.columnColors === undefined || value.columnColors.length === value.columns.length)
 const createCardInput = z.strictObject({
@@ -53,6 +55,20 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
   app.use('/api/rooms/:id/revealed-cards', authorizeCardAccess)
   app.use('/api/rooms/:id/votes', authorizeCardAccess)
   app.use('/api/rooms/:id/cards/:cardId/vote', authorizeCardAccess)
+  app.use('/api/rooms/:id/mood', authorizeCardAccess)
+  app.get('/api/rooms/:id/mood', async c => {
+    const snapshot = await rooms.readMood(c.get('room').id, c.get('ownerHash'))
+    return snapshot ? c.json(snapshot) : c.json({ error: 'ROOM_NOT_FOUND' }, 404)
+  })
+  app.put('/api/rooms/:id/mood', bodyLimit({ maxSize: 1024, onError: c => c.json({ error: 'BODY_TOO_LARGE' }, 413) }), async c => {
+    if (c.req.header('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') return c.json({ error: 'JSON_REQUIRED' }, 415)
+    let body: unknown
+    try { body = await c.req.json() } catch { return c.json({ error: 'INVALID_JSON' }, 400) }
+    const parsed = z.strictObject({ mood: z.enum(MOODS).nullable() }).safeParse(body)
+    if (!parsed.success) return c.json({ error: 'INVALID_MOOD' }, 400)
+    if (!await rooms.saveMood(c.get('room').id, c.get('ownerHash'), parsed.data.mood)) return c.json({ error: 'CHECK_IN_ENDED' }, 409)
+    return c.json({ saved: true })
+  })
   app.get('/api/rooms/:id/votes', async (c) => {
     const room = c.get('room')
     if (room.state === 'writing') return c.json({ error: 'VOTING_NOT_OPEN' }, 409)
@@ -78,7 +94,7 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
     onError: (c) => c.json({ error: 'BODY_TOO_LARGE' }, 413),
   }), async (c) => {
     const room = c.get('room')
-    if (room.state !== 'writing') return c.json({ error: 'WRITING_ENDED' }, 409)
+    if (room.state !== 'writing' || room.checkIn === 'open') return c.json({ error: 'WRITING_ENDED' }, 409)
     if (c.req.header('Content-Type')?.split(';')[0]?.trim().toLowerCase() !== 'application/json') {
       return c.json({ error: 'JSON_REQUIRED' }, 415)
     }
@@ -92,7 +108,7 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
   })
   app.delete('/api/rooms/:id/cards/:cardId', async (c) => {
     const room = c.get('room')
-    if (room.state !== 'writing') return c.json({ error: 'WRITING_ENDED' }, 409)
+    if (room.state !== 'writing' || room.checkIn === 'open') return c.json({ error: 'WRITING_ENDED' }, 409)
     const removed = await rooms.deleteOwnCard(room.id, c.get('ownerHash'), c.req.param('cardId'))
     if (!removed) return c.json({ error: 'CARD_NOT_FOUND' }, 404)
     return c.body(null, 204)
@@ -104,7 +120,7 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
     onError: (c) => c.json({ error: 'BODY_TOO_LARGE' }, 413),
   }), async (c) => {
     const room = c.get('room')
-    if (room.state !== 'writing') return c.json({ error: 'WRITING_ENDED' }, 409)
+    if (room.state !== 'writing' || room.checkIn === 'open') return c.json({ error: 'WRITING_ENDED' }, 409)
     const contentType = c.req.header('Content-Type')?.split(';')[0]?.trim().toLowerCase()
     if (contentType !== 'application/json') return c.json({ error: 'JSON_REQUIRED' }, 415)
     let body: unknown
@@ -148,7 +164,7 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
     const parsed = createRoomInput.safeParse(body)
     if (!parsed.success) return c.json({ error: 'INVALID_ROOM', message: 'Provide one to five nonempty column names.' }, 400)
     const { secret, hash } = createFacilitatorSecret()
-    const room = await rooms.create(parsed.data.columns, hash, parsed.data.columnColors)
+    const room = await rooms.create(parsed.data.columns, hash, parsed.data.columnColors, parsed.data.moodCheckIn)
     // The one and only response containing the raw facilitator capability.
     return c.json({ room, facilitatorSecret: secret }, 201)
   })
@@ -170,6 +186,16 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
   app.use('/api/rooms/:id/facilitator/votes', authorizeFacilitator)
   app.use('/api/rooms/:id/reveal', authorizeFacilitator)
   app.use('/api/rooms/:id/close', authorizeFacilitator)
+  app.use('/api/rooms/:id/facilitator/mood', authorizeFacilitator)
+  app.use('/api/rooms/:id/start-writing', authorizeFacilitator)
+  app.get('/api/rooms/:id/facilitator/mood', async c => {
+    const snapshot = await rooms.readMood(c.get('room').id)
+    return snapshot ? c.json(snapshot) : c.json({ error: 'ROOM_NOT_FOUND' }, 404)
+  })
+  app.post('/api/rooms/:id/start-writing', async c => {
+    const room = await rooms.startWriting(c.get('room').id, c.get('facilitatorHash'))
+    return room ? c.json({ room }) : c.json({ error: 'ROOM_CHANGED' }, 409)
+  })
   app.get('/api/rooms/:id/facilitator', (c) => c.json({ room: c.get('room') }))
   app.get('/api/rooms/:id/facilitator/votes', async (c) => {
     const room = c.get('room')
@@ -181,7 +207,7 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
   })
   app.post('/api/rooms/:id/reveal', async (c) => {
     const room = c.get('room')
-    if (room.state !== 'writing') return c.json({ error: 'INVALID_TRANSITION' }, 409)
+    if (room.state !== 'writing' || room.checkIn === 'open') return c.json({ error: 'INVALID_TRANSITION' }, 409)
     transitionRoom(room, 'revealed')
     const revealed = await rooms.revealRoom(room.id, c.get('facilitatorHash'))
     if (!revealed) return c.json({ error: 'ROOM_CHANGED' }, 409)

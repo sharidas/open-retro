@@ -145,3 +145,12 @@ it('cleans up the first StrictMode effect and leaves a single polling loop', asy
   await advance(POLL_INTERVAL_MS)
   expect(fetchMock).toHaveBeenCalledTimes(3)
 })
+
+it('does not regress completed check-in when an older room snapshot arrives', async () => {
+  fetchMock.mockImplementation(async () => response(200, { room: { ...room(), checkIn: 'open' } }))
+  await mount()
+  expect(latest.room?.checkIn).toBe('open')
+  await act(async () => latest.acceptRoom({ ...room(), checkIn: 'complete' }))
+  await advance(POLL_INTERVAL_MS)
+  expect(latest.room?.checkIn).toBe('complete')
+})

@@ -2,7 +2,7 @@ import { isColumnColor } from './templates'
 import { useCallback, useEffect, useState } from 'react'
 import type { RoomSession } from './session'
 
-export type Room = { id: string; columns: string[]; columnColors?: string[]; state: 'writing' | 'revealed' | 'closed'; expiresAt: number }
+export type Room = { id: string; columns: string[]; columnColors?: string[]; checkIn?: 'off' | 'open' | 'complete'; state: 'writing' | 'revealed' | 'closed'; expiresAt: number }
 export const POLL_INTERVAL_MS = 10_000
 const ranks = { writing: 0, revealed: 1, closed: 2 }
 export function isRoom(value: unknown, id: string): value is Room {
@@ -11,6 +11,7 @@ export function isRoom(value: unknown, id: string): value is Room {
   return room.id === id && Array.isArray(room.columns) && room.columns.length >= 1 && room.columns.length <= 5 &&
     room.columns.every((name: unknown) => typeof name === 'string') &&
     (room.columnColors === undefined || (Array.isArray(room.columnColors) && room.columnColors.length === room.columns.length && room.columnColors.every(isColumnColor))) &&
+    (room.checkIn === undefined || ['off', 'open', 'complete'].includes(String(room.checkIn))) &&
     (room.state === 'writing' || room.state === 'revealed' || room.state === 'closed') &&
     typeof room.expiresAt === 'number' && Number.isFinite(room.expiresAt)
 }
@@ -25,6 +26,7 @@ export function useRoom(session: RoomSession) {
   const acceptRoom = useCallback((incoming: Room) => {
     setRoom((previous) => {
       // An in-flight writing response must not undo a confirmed reveal.
+      if (previous?.checkIn === 'complete' && incoming.checkIn === 'open') return previous
       if (previous && ranks[incoming.state] < ranks[previous.state]) return previous
       if (previous && JSON.stringify(previous) === JSON.stringify(incoming)) return previous
       return incoming

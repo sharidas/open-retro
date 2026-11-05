@@ -40,7 +40,7 @@ describe('SQLite room persistence', () => {
     const upgraded = await openDatabase(path)
     cleanup.push(upgraded.close)
     const repo = roomRepository(upgraded.db)
-    expect(await repo.find('legacy')).toEqual({ id: 'legacy', columns: ['A', 'B', 'C', 'D', 'E'], columnColors: ['sage', 'peach', 'blue', 'lavender', 'sand'], state: 'writing', createdAt: 1, expiresAt: 2 })
+    expect(await repo.find('legacy')).toEqual({ id: 'legacy', columns: ['A', 'B', 'C', 'D', 'E'], columnColors: ['sage', 'peach', 'blue', 'lavender', 'sand'], state: 'writing', checkIn: 'off', createdAt: 1, expiresAt: 2 })
     expect(await repo.findFacilitatorHash('legacy')).toBeNull()
   })
   it('round-trips normalized columns, writing state, and expiry timestamps', async () => {
@@ -52,7 +52,7 @@ describe('SQLite room persistence', () => {
       id: room.id,
       columns: ['Went well', 'Improve', 'Ideas', 'Questions', 'Thanks'],
       columnColors: ['sage', 'peach', 'blue', 'lavender', 'sand'],
-      state: 'writing', createdAt: now, expiresAt: now + ROOM_LIFETIME_MS,
+      state: 'writing', checkIn: 'off', createdAt: now, expiresAt: now + ROOM_LIFETIME_MS,
     })
   })
 
@@ -70,6 +70,7 @@ describe('SQLite room persistence', () => {
       { name: '0004_cards.sql' },
       { name: '0005_votes.sql' },
       { name: '0006_column_colors.sql' },
+      { name: '0007_mood_check_in.sql' },
     ])
   })
 

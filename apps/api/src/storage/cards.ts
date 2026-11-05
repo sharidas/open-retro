@@ -21,7 +21,7 @@ export function cardRepository(db: Database, clock: () => number = Date.now) {
       const result = await db.all<PrivateCard>(sql`
         UPDATE cards SET text = ${text}
         WHERE id = ${cardId} AND room_id = ${roomId} AND owner_hash = ${ownerHash}
-          AND EXISTS (SELECT 1 FROM rooms WHERE id = ${roomId} AND state = 'writing' AND expires_at > ${clock()})
+          AND EXISTS (SELECT 1 FROM rooms WHERE id = ${roomId} AND state = 'writing' AND check_in <> 'open' AND expires_at > ${clock()})
         RETURNING id, column_index AS columnIndex, text
       `)
       return result[0]
@@ -30,7 +30,7 @@ export function cardRepository(db: Database, clock: () => number = Date.now) {
       const result = await db.all(sql`
         DELETE FROM cards
         WHERE id = ${cardId} AND room_id = ${roomId} AND owner_hash = ${ownerHash}
-          AND EXISTS (SELECT 1 FROM rooms WHERE id = ${roomId} AND state = 'writing' AND expires_at > ${clock()})
+          AND EXISTS (SELECT 1 FROM rooms WHERE id = ${roomId} AND state = 'writing' AND check_in <> 'open' AND expires_at > ${clock()})
         RETURNING id
       `)
       return result.length === 1
@@ -42,7 +42,7 @@ export function cardRepository(db: Database, clock: () => number = Date.now) {
         INSERT INTO cards (id, room_id, owner_hash, column_index, text)
         SELECT ${randomUUID()}, id, ${ownerHash}, ${columnIndex}, ${text}
         FROM rooms
-        WHERE id = ${roomId} AND state = 'writing' AND expires_at > ${clock()}
+        WHERE id = ${roomId} AND state = 'writing' AND check_in <> 'open' AND expires_at > ${clock()}
           AND json_array_length(columns) > ${columnIndex}
           AND EXISTS (SELECT 1 FROM participants WHERE room_id = ${roomId} AND token_hash = ${ownerHash})
         RETURNING id, column_index AS columnIndex, text

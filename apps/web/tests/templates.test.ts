@@ -25,7 +25,7 @@ it.each(templates)('prefills and submits the $name template', async template => 
   await click(template.name)
   expect(names()).toEqual([...template.columns])
   await click('Create retrospective')
-  expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ columns: [...template.columns], columnColors: [...template.colors] })
+  expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ columns: [...template.columns], columnColors: [...template.colors], moodCheckIn: true })
 })
 it('keeps changed colours with their column when another column is removed', async () => {
   const select = document.querySelector<HTMLSelectElement>('select')!
@@ -33,7 +33,7 @@ it('keeps changed colours with their column when another column is removed', asy
   const remove = document.querySelector<HTMLButtonElement>('[aria-label="Remove column 2"]')!
   await act(async () => remove.click())
   await click('Create retrospective')
-  expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ columns: ['Went well', 'Next steps'], columnColors: ['lavender', 'blue'] })
+  expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ columns: ['Went well', 'Next steps'], columnColors: ['lavender', 'blue'], moodCheckIn: true })
 })
 it('starts with one blank column, rejects blank submission, and enforces the five-column limit', async () => {
   await click('Start from scratch'); expect(names()).toEqual([''])

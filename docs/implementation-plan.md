@@ -320,9 +320,13 @@ existing anonymous access rules and maximum of five columns.
   Implemented with saved palette keys, migration 0006 for existing rooms, and
   shared rendering in participant/facilitator views. 213 tests, type checks,
   production build, and desktop template/customisation browser checks passed.
-- [ ] **Optional mood check-in.** Add a pre-writing check-in with five labelled
+- [x] **Optional mood check-in.** Add a pre-writing check-in with five labelled
   emoji choices, one changeable answer per participant, and anonymous aggregate
   results revealed when writing starts. Do not link moods to cards.
+  Completed with optional creation setting, change/withdraw controls, private
+  snapshots, facilitator confirmation, and atomic writing/reveal gates. Migration
+  0007 preserves existing rooms. 236 tests, type checks, and production build
+  passed; desktop browser checks covered answers, withdrawal, reload, and start.
 - [ ] **Collaborative grouping.** After reveal, participants and facilitators can
   group, name, move, and ungroup similar cards. Preserve original cards and votes;
   label group totals as the sum of card votes. Start with accessible explicit
