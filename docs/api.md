@@ -292,3 +292,33 @@ colours assigns those defaults in column order. Room metadata includes
 Templates are client-side presets for column names and colours. The API stores
 only the final configuration, not a template ID. Names, order, and colours stay
 fixed after creation. Arbitrary CSS values are not accepted.
+
+## Optional Mood Check-in
+
+Room creation accepts `moodCheckIn: boolean` (API default false for compatibility;
+the web form sends true by default). Room metadata adds `checkIn`:
+`off`, `open`, or `complete`. An open check-in is a pre-writing gate within the
+existing `writing` lifecycle state; clients must inspect both fields. Existing
+rooms migrate to `off`. Cards and reveal are blocked while check-in is open.
+
+- `GET /api/rooms/:id/mood`: participant bearer token; returns `checkIn`, only
+  that participant's `selected` mood (or null), and `totals`.
+- `PUT /api/rooms/:id/mood`: participant token and JSON `{ "mood": "good" }`.
+  Allowed values: drained, low, steady, good, energised. Null withdraws the
+  answer. Idempotently replaces the participant's one answer; returns
+  `{ "saved": true }`. Clients then read their current snapshot.
+- `GET /api/rooms/:id/facilitator/mood`: facilitator secret; returns `checkIn`
+  and `totals`, never a selection, participant hash, or response list.
+- `POST /api/rooms/:id/start-writing`: facilitator secret, no body. Atomically
+  changes an open check-in to complete and returns `{ room }`. No minimum
+  response count is required. Repetition and competing starts return 409.
+
+Totals are null until check-in completes, then contain five `{ mood, total }`
+entries, including zero counts. Snapshot disclosure is gated in the SQL query.
+Answers cannot change after completion. Room expiry/deletion blocks reads.
+
+Invalid credentials return 401; authenticated expired rooms return 404. Invalid
+mood JSON or extra fields return 400, non-JSON PUT returns 415, and a body larger
+than 1 KiB returns 413. Ineligible mood writes return 409 `CHECK_IN_ENDED`;
+ineligible start-writing returns 409 `ROOM_CHANGED`. Writes recheck membership,
+state, and expiry atomically. Starting writing also rechecks facilitator access.

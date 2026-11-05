@@ -310,3 +310,17 @@ The room saves these choices for both participants and the facilitator.
 Selecting a template replaces the current draft configuration. Customise it
 before creating the room, keeping between one and five columns. Existing rooms
 receive the previous default pastel colours automatically during migration.
+
+## Team Mood Check-in
+
+New rooms offer **Begin with an optional team mood check-in**, enabled by default
+in the form. Turn it off to go straight to writing. Existing rooms are unchanged.
+Participants can choose Drained, Low, Steady, Good, or Energised, change their
+choice, withdraw it, or simply wait without answering.
+
+During check-in, only the participant can retrieve their own selection; other
+participants and the facilitator cannot see individual answers or totals.
+The facilitator confirms **Start writing** when the team is ready. This freezes
+answers, reveals five aggregate counts, and enables private cards. No one must
+answer before writing can start. Results stay readable until room expiry or
+deletion. Facilitators use the participant link if they want to answer too.

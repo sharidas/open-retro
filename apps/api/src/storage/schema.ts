@@ -5,6 +5,7 @@ export const rooms = sqliteTable('rooms', {
   id: text('id').primaryKey(),
   columns: text('columns', { mode: 'json' }).$type<readonly string[]>().notNull(),
   columnColors: text('column_colors', { mode: 'json' }).$type<readonly string[]>().notNull(),
+  checkIn: text('check_in').$type<'off' | 'open' | 'complete'>().notNull().default('off'),
   state: text('state').$type<RoomState>().notNull(),
   createdAt: integer('created_at').notNull(),
   expiresAt: integer('expires_at').notNull(),
@@ -39,4 +40,13 @@ export const votes = sqliteTable('votes', {
   foreignKey({ columns: [table.roomId, table.cardId], foreignColumns: [cards.roomId, cards.id] }).onDelete('cascade'),
   uniqueIndex('votes_room_voter_slot_unique').on(table.roomId, table.voterHash, table.slot),
   index('votes_room_card_idx').on(table.roomId, table.cardId),
+])
+
+export const moods = sqliteTable('moods', {
+  roomId: text('room_id').notNull(),
+  participantHash: text('participant_hash').notNull(),
+  mood: text('mood').$type<'drained' | 'low' | 'steady' | 'good' | 'energised'>().notNull(),
+}, table => [
+  primaryKey({ columns: [table.roomId, table.participantHash] }),
+  foreignKey({ columns: [table.roomId, table.participantHash], foreignColumns: [participants.roomId, participants.tokenHash] }).onDelete('cascade'),
 ])
