@@ -51,7 +51,7 @@ expired room returns HTTP 404. Rooms created before migration 0002 have no
 facilitator capability and cannot pass this check; create a new room instead.
 
 This protected metadata read establishes the access boundary. Reveal is now
-supported below, as is closure; room deletion remains a later task. Participant
+supported below, as are closure and room deletion. Participant
 joining now has separate endpoints below. The form generates separate participant and
 facilitator links. Only the latter contains a secret, encoded in its URL
 fragment. The facilitator route consumes this fragment, removes it from the
@@ -84,7 +84,8 @@ is not registered. Participant sessions persist across reloads and tabs sharing
 the same browser storage; separate profiles/incognito sessions are independent.
 This does not enforce one person per participant: another browser or cleared
 storage can create a new session. Old local storage entries are not automatically
-cleared yet; retention cleanup remains task 15.
+cleared automatically; clearing site storage removes them. Server-side retention
+cleanup removes the corresponding token hashes.
 
 ## Private Cards
 
@@ -372,3 +373,20 @@ Readiness totals count persisted joined browser sessions, not online presence.
 Participant responses never include aggregate counts. Readiness and timer writes
 check room phase and expiry atomically; timer writes also check facilitator
 capability and revision. Expiry never reveals cards or prevents card writing.
+
+
+## Delete a room
+
+`DELETE /api/rooms/:id/facilitator` requires the room's facilitator bearer
+credential. Works in writing, revealed, and closed phases. Returns 204 without
+a body after cascading removal of all room data. Invalid/missing/cross-room
+credentials return 401; a still-stored expired room with valid credentials
+returns 404. If the room or capability changes after authorization, return 409
+`ROOM_CHANGED`. A repeated delete normally returns 401 because the capability
+hash has been removed; clients must not interpret this as confirmed deletion.
+Responses are no-store. Uncertain writes require a status check, not replay.
+
+There is no public cleanup endpoint. The Node process removes up to 100 expired
+rooms at startup and once per minute after each batch completes. APIs deny expired
+access before physical cleanup. Removed participant/facilitator capabilities no
+longer authorize reads or writes, and join returns 404 for a removed room.

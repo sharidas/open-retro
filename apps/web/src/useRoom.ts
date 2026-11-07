@@ -16,7 +16,7 @@ export function isRoom(value: unknown, id: string): value is Room {
     typeof room.expiresAt === 'number' && Number.isFinite(room.expiresAt)
 }
 
-export function useRoom(session: RoomSession) {
+export function useRoom(session: RoomSession, enabled = true) {
   const [room, setRoom] = useState<Room | null>(null)
   const [error, setError] = useState(session.error ?? '')
   const [loading, setLoading] = useState(!session.error)
@@ -34,7 +34,7 @@ export function useRoom(session: RoomSession) {
   }, [])
 
   useEffect(() => {
-    if (session.error || !session.credential) return
+    if (!enabled || session.error || !session.credential) return
     let disposed = false
     let stopped = false
     let active = false
@@ -116,7 +116,7 @@ export function useRoom(session: RoomSession) {
       disposed = true; clearTimeout(timer); clearTimeout(deadline); controller?.abort()
       document.removeEventListener('visibilitychange', visibilityChanged)
     }
-  }, [session, attempt, acceptRoom])
+  }, [session, attempt, acceptRoom, enabled])
 
   return { room, error, loading, terminal, refresh, acceptRoom }
 }

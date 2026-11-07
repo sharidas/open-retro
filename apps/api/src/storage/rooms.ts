@@ -26,6 +26,18 @@ export function roomRepository(db: Database, clock: () => number = Date.now) {
     ...groupRepository(db, clock),
     ...moodRepository(db, clock),
     ...voteRepository(db, clock),
+    async deleteRoom(id: string, facilitatorHash: string): Promise<boolean> {
+      const deleted = await db.delete(rooms).where(and(eq(rooms.id, id),
+        eq(rooms.facilitatorSecretHash, facilitatorHash), gt(rooms.expiresAt, clock())))
+        .returning({ id: rooms.id })
+      return deleted.length === 1
+    },
+    async cleanupExpired(): Promise<number> {
+      // Bound each transaction; the expiry index keeps the scan small.
+      const result = await db.$client.execute({ sql: `DELETE FROM rooms WHERE id IN
+        (SELECT id FROM rooms WHERE expires_at <= ? ORDER BY expires_at LIMIT 100)`, args: [clock()] })
+      return result.rowsAffected
+    },
     async revealRoom(id: string, facilitatorHash: string): Promise<StoredRoom | undefined> {
       const [room] = await db.update(rooms).set({ state: 'revealed' })
         .where(and(eq(rooms.id, id), eq(rooms.state, 'writing'), inArray(rooms.checkIn, ['off', 'complete']),
@@ -47,8 +59,12 @@ export function roomRepository(db: Database, clock: () => number = Date.now) {
         .returning(publicFields)
       return room
     },
-    async joinParticipant(roomId: string, tokenHash: string): Promise<void> {
-      await db.insert(participants).values({ roomId, tokenHash }).onConflictDoNothing()
+    async joinParticipant(roomId: string, tokenHash: string): Promise<boolean> {
+      const result = await db.$client.execute({ sql: `INSERT INTO participants (room_id, token_hash)
+        SELECT id, :hash FROM rooms WHERE id = :roomId AND state <> 'closed' AND expires_at > :now
+        ON CONFLICT(room_id, token_hash) DO UPDATE SET token_hash = excluded.token_hash
+        RETURNING room_id`, args: { roomId, hash: tokenHash, now: clock() } })
+      return result.rows.length === 1
     },
     async hasParticipant(roomId: string, tokenHash: string): Promise<boolean> {
       const records = await db.select({ roomId: participants.roomId }).from(participants)
