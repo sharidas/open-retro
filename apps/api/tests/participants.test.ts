@@ -39,7 +39,7 @@ it('joins without identity fields, stores only a room-scoped hash, and returns p
   expect(response.headers.get('Cache-Control')).toBe('no-store')
   expect(await response.json()).toEqual({ room: f.room })
   expect(await f.db.all(sql`SELECT * FROM participants`)).toEqual([
-    { room_id: f.room.id, token_hash: hashSecret(f.token) },
+    { room_id: f.room.id, token_hash: hashSecret(f.token), ready: 0 },
   ])
   expect((await f.request(f.room.id, f.token, 'GET')).status).toBe(200)
 })

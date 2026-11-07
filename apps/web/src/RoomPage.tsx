@@ -1,3 +1,4 @@
+import { WritingProgress } from './WritingProgress'
 import { MoodCheckIn } from './MoodCheckIn'
 import { columnStyle } from './templates'
 import { useEffect, useState } from 'react'
@@ -50,6 +51,8 @@ export function RoomPage({ session }: { session: RoomSession }) {
     </>}
     {room && room.checkIn && room.checkIn !== 'off' && !terminal &&
       <MoodCheckIn session={session} checkIn={room.checkIn} available={available} onRoom={acceptRoom} onRefresh={refresh} />}
+    {room?.state === 'writing' && room.checkIn !== 'open' && !terminal &&
+      <WritingProgress session={session} available={available} hasUnsentWriting={hasUnsentWriting} onRoomRefresh={refresh} />}
     {room?.state === 'revealed' && session.role === 'facilitator' &&
       <CloseControl session={session} disabled={!available} onClosed={acceptRoom} onRefresh={refresh} />}
     {room && room.state !== 'writing' && !terminal && <SharedBoard session={session} columns={room.columns} columnColors={room.columnColors}

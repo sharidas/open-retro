@@ -15,6 +15,7 @@ export const rooms = sqliteTable('rooms', {
 export const participants = sqliteTable('participants', {
   roomId: text('room_id').notNull().references(() => rooms.id, { onDelete: 'cascade' }),
   tokenHash: text('token_hash').notNull(),
+  ready: integer('ready', { mode: 'boolean' }).notNull().default(false),
 }, (table) => [primaryKey({ columns: [table.roomId, table.tokenHash] })])
 
 export const cards = sqliteTable('cards', {
@@ -55,4 +56,12 @@ export const roomGrouping = sqliteTable('room_grouping', {
   roomId: text('room_id').primaryKey().references(() => rooms.id, { onDelete: 'cascade' }),
   version: integer('version').notNull(),
   groups: text('groups', { mode: 'json' }).$type<import('./groups.js').CardGroup[]>().notNull(),
+})
+
+export const writingTimers = sqliteTable('writing_timers', {
+  roomId: text('room_id').primaryKey().references(() => rooms.id, { onDelete: 'cascade' }),
+  version: integer('version').notNull(),
+  status: text('status').$type<'idle' | 'running' | 'paused'>().notNull(),
+  endsAt: integer('ends_at'),
+  remainingMs: integer('remaining_ms').notNull(),
 })

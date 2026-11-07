@@ -338,9 +338,15 @@ existing anonymous access rules and maximum of five columns.
   Browser closure check was blocked by automatic approval review; API and hook
   tests verify closed grouping remains readable and rejects mutations.
 
-- [ ] **Writing timer and readiness (next chunk).** Facilitator starts, pauses,
+- [x] **Writing timer and readiness.** Facilitator starts, pauses,
   and extends a shared writing timer. Timer expiry prompts the facilitator; it
   never automatically reveals cards. Participants can mark themselves finished
   or undo readiness. Only the facilitator sees an anonymous ready/total count,
   never participant identities or individual indicators. Facilitators who write
-  via the participant link use the same readiness controls. This follows grouping.
+  via the participant link use the same readiness controls. Implemented with
+  persistent server deadlines, revision checks, and separate role projections.
+  Automated coverage includes privacy, expiry, concurrent updates, uncertain
+  responses, and readiness controls. All 288 tests, type checks, and production
+  build passed. Browser checks verified timer start and the shared participant
+  countdown. Browser tabs became unavailable before manual readiness and pause
+  checks; those behaviors are covered by automated tests.
