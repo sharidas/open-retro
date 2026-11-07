@@ -1,5 +1,6 @@
+import { GroupingBoard } from './GroupingBoard'
 import { columnStyle } from './templates'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { isCard, type Card } from './card'
 import type { RoomSession } from './session'
 import { useVoting } from './useVoting'
@@ -13,7 +14,7 @@ export function SharedBoard({ session, columns, columnColors, phase, available, 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
-  const [view, setView] = useState<'columns' | 'discussion'>('columns')
+  const [view, setView] = useState<'columns' | 'discussion' | 'groups'>('columns')
   const voting = useVoting({ session, cardIds: cards.map((card) => card.id), phase,
     enabled: !loading && !error, available, onRoomRefresh })
   const snapshot = voting.snapshot
@@ -53,7 +54,7 @@ export function SharedBoard({ session, columns, columnColors, phase, available, 
     return () => { window.clearTimeout(timeout); controller.abort() }
   }, [session, columns.length, attempt])
 
-  function renderCard(card: Card, rank?: number) {
+  function renderCard(card: Card, rank?: number, controls?: ReactNode) {
     const vote = voteMap.get(card.id)
     const selected = vote?.selected ?? false
     const atLimit = snapshot?.remainingVotes === 0 && !selected
@@ -62,6 +63,7 @@ export function SharedBoard({ session, columns, columnColors, phase, available, 
     return <li key={card.id} className={styles.card}>
       {rank !== undefined && <p className={styles.topicLabel}>Topic {rank} · {columns[card.columnIndex]}</p>}
       <p id={`shared-card-${card.id}`} className={styles.cardText}>{card.text}</p>
+      {controls}
       <div className={styles.voteActions}>
         <span className={styles.voteTotal}>{vote ? `${vote.total} ${vote.total === 1 ? 'vote' : 'votes'}` : 'Votes unavailable'}</span>
         {session.role === 'participant' && <button type="button" className={selected ? styles.selectedVote : styles.secondary}
@@ -100,11 +102,15 @@ export function SharedBoard({ session, columns, columnColors, phase, available, 
       {voting.actionError && <p role="alert" className={styles.error}>{voting.actionError}</p>}
       {!loading && !error && <div className={styles.viewControls} role="group" aria-label="Board view">
         <button className={styles.secondary} aria-pressed={view === 'columns'} onClick={() => setView('columns')}>By column</button>
+        <button className={styles.secondary} aria-pressed={view === 'groups'} onClick={() => setView('groups')}>Groups</button>
         <button className={styles.secondary} aria-pressed={view === 'discussion'} disabled={!snapshot}
           onClick={() => setView('discussion')}>Most voted</button>
       </div>}
     </div>
-    {!loading && !error && (view === 'discussion' ? <section className={styles.discussion} aria-label="Prioritized discussion">
+    {!loading && !error && (view === 'groups' ? <GroupingBoard session={session} cards={cards} columns={columns}
+      phase={phase} available={available} onRoomRefresh={onRoomRefresh}
+      totals={snapshot ? new Map(snapshot.votes.map(vote => [vote.cardId, vote.total])) : null}
+      renderCard={(card, controls) => renderCard(card, undefined, controls)} /> : view === 'discussion' ? <section className={styles.discussion} aria-label="Prioritized discussion">
       <h2>Most-voted topics</h2>
       {cards.length === 0 && <p>No cards to discuss.</p>}
       <ol className={styles.discussionList} aria-label="Most-voted cards">

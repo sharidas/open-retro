@@ -1,3 +1,4 @@
+import { groupRepository } from './groups.js'
 import { moodRepository } from './moods.js'
 import { columnColors } from '../domain/column-colors.js'
 import { randomUUID } from 'node:crypto'
@@ -20,6 +21,7 @@ type Database = Awaited<ReturnType<typeof openDatabase>>['db']
 export function roomRepository(db: Database, clock: () => number = Date.now) {
   return {
     ...cardRepository(db, clock),
+    ...groupRepository(db, clock),
     ...moodRepository(db, clock),
     ...voteRepository(db, clock),
     async revealRoom(id: string, facilitatorHash: string): Promise<StoredRoom | undefined> {

@@ -322,3 +322,25 @@ mood JSON or extra fields return 400, non-JSON PUT returns 415, and a body large
 than 1 KiB returns 413. Ineligible mood writes return 409 `CHECK_IN_ENDED`;
 ineligible start-writing returns 409 `ROOM_CHANGED`. Writes recheck membership,
 state, and expiry atomically. Starting writing also rechecks facilitator access.
+
+## Collaborative Grouping
+
+Participants use `GET/PUT /api/rooms/:id/groups`; facilitators use
+`GET/PUT /api/rooms/:id/facilitator/groups`, each with the corresponding bearer
+credential. GET returns `{ "version": 0, "groups": [] }` initially. Each group
+has a UUID `id`, a trimmed `name`, and `cardIds`. Reads require revealed or closed
+state and exclude credentials, card authors, and individual voting selections.
+
+PUT supplies the full `{ version, groups }` layout using the last read version.
+Limits: 100 groups, 1–200 cards per group, 1–80 characters per name, and 64 KiB
+JSON body. A card can occur only once across the layout; group IDs must be unique.
+Every card must belong to this room. Empty groups are omitted when ungrouping.
+
+Success returns `{ "saved": true }` and increments the revision atomically.
+Clients read a fresh snapshot after every write, including uncertain failures.
+A stale version or eligibility/membership change returns 409 `GROUPING_CHANGED`;
+clients must review and explicitly retry, never replay stale layouts. Writing
+and closed rooms reject PUT with 409 `GROUPING_NOT_OPEN`; writing GET returns
+409 `CARDS_NOT_REVEALED`. Invalid credentials return 401, authenticated expired
+rooms return 404, malformed payloads return 400, unsupported content types 415,
+and oversized bodies 413. Group updates preserve cards and votes.

@@ -23,6 +23,15 @@ const createCardInput = z.strictObject({
 })
 const updateCardInput = z.strictObject({ text: z.string().trim().min(1).max(2000) })
 
+const groupingInput = z.strictObject({
+  version: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER - 1),
+  groups: z.array(z.strictObject({
+    id: z.uuid(), name: z.string().trim().min(1).max(80),
+    cardIds: z.array(z.uuid()).min(1).max(200),
+  })).max(100),
+}).refine(value => new Set(value.groups.map(group => group.id)).size === value.groups.length &&
+  new Set(value.groups.flatMap(group => group.cardIds)).size === value.groups.reduce((sum, group) => sum + group.cardIds.length, 0))
+
 export function createApp(rooms: Rooms, clock: () => number = Date.now) {
   const app = new Hono<AppEnv>()
   app.use('/api/*', async (c, next) => {
@@ -221,5 +230,26 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
     if (!closed) return c.json({ error: 'ROOM_CHANGED' }, 409)
     return c.json({ room: closed })
   })
+  for (const role of ['participant', 'facilitator'] as const) {
+    const path = role === 'facilitator' ? '/api/rooms/:id/facilitator/groups' : '/api/rooms/:id/groups'
+    app.use(path, role === 'facilitator' ? authorizeFacilitator : authorizeCardAccess)
+    app.get(path, async c => {
+      if (c.get('room').state === 'writing') return c.json({ error: 'CARDS_NOT_REVEALED' }, 409)
+      const snapshot = await rooms.readGroups(c.get('room').id)
+      return snapshot ? c.json(snapshot) : c.json({ error: 'ROOM_NOT_FOUND' }, 404)
+    })
+    app.put(path, bodyLimit({ maxSize: 65536, onError: c => c.json({ error: 'BODY_TOO_LARGE' }, 413) }), async c => {
+      if (c.get('room').state !== 'revealed') return c.json({ error: 'GROUPING_NOT_OPEN' }, 409)
+      if (c.req.header('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') return c.json({ error: 'JSON_REQUIRED' }, 415)
+      let body: unknown
+      try { body = await c.req.json() } catch { return c.json({ error: 'INVALID_JSON' }, 400) }
+      const parsed = groupingInput.safeParse(body)
+      if (!parsed.success) return c.json({ error: 'INVALID_GROUPS' }, 400)
+      const saved = await rooms.replaceGroups(c.get('room').id, { role,
+        hash: role === 'facilitator' ? c.get('facilitatorHash') : c.get('ownerHash') }, parsed.data.version, parsed.data.groups)
+      if (!saved) return c.json({ error: 'GROUPING_CHANGED' }, 409)
+      return c.json({ saved: true })
+    })
+  }
   return app
 }

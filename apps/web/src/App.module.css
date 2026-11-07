@@ -142,3 +142,15 @@
 .moodResults { display: flex; flex-wrap: wrap; gap: 12px; list-style: none; padding: 0; }
 .moodResults li { display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: #f5f4ed; border-radius: 10px; }
 .moodResults li span { font-size: 1.6rem; }
+
+.grouping { margin-top: 24px; }
+.groupEditor { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; border: 1px solid #bccbc0; border-radius: 12px; padding: 18px; margin: 20px 0; background: #fffefa; }
+.groupEditor legend { font-size: .85rem; font-weight: 700; }
+.groupEditor label, .renameGroup label { display: flex; flex-direction: column; gap: 6px; font-size: .85rem; min-width: 0; }
+.groupEditor input, .groupEditor select, .renameGroup input { max-width: 100%; padding: 10px; border: 1px solid #a5b6aa; border-radius: 8px; background: white; color: #203b33; font: inherit; }
+.groupGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; margin-top: 20px; }
+.cardGroup { background: #eaf0e6; border: 1px solid #bccbc0; border-radius: 14px; padding: 18px; min-width: 0; overflow-wrap: anywhere; }
+.cardGroup h3 { margin: 0; }
+.groupCardLabel { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: .8rem; color: #52635a; margin-bottom: 12px; white-space: normal; }
+.groupCardLabel input { margin-right: 6px; }
+.renameGroup { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
