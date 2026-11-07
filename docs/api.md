@@ -344,3 +344,31 @@ and closed rooms reject PUT with 409 `GROUPING_NOT_OPEN`; writing GET returns
 409 `CARDS_NOT_REVEALED`. Invalid credentials return 401, authenticated expired
 rooms return 404, malformed payloads return 400, unsupported content types 415,
 and oversized bodies 413. Group updates preserve cards and votes.
+
+
+## Writing timer and readiness
+
+Available only during `writing`, after optional check-in completes. All routes
+require the matching role's bearer credential. Expired rooms return 404;
+unavailable writing returns 409. Responses use the existing no-store policy.
+
+- `GET /api/rooms/:id/writing-progress`: participant snapshot with `ownReady`.
+- `GET /api/rooms/:id/facilitator/writing-progress`: facilitator snapshot with
+  `joinedCount` and `readyCount`, without participant identities.
+- `PUT /api/rooms/:id/ready`: strict JSON `{ "ready": true }` (or false), idempotent.
+- `PUT /api/rooms/:id/facilitator/timer`: strict JSON with `version` and `action`.
+  Actions `start` and `extend` require integer `seconds` (1–3600); `pause` and
+  `resume` accept no duration. Successful writes return `{ "saved": true }`.
+
+Both snapshots include `serverNow` (epoch milliseconds) and `timer`:
+`{ version, status, endsAt, remainingMs }`. Status is `idle`, `running`, or
+`paused`. Running timers use `endsAt`; paused timers use `remainingMs`.
+Timer expiry preserves running status with a past deadline. Start can restart
+an expired timer; extend adds to the later of its deadline and server time.
+No more than one hour may remain. Invalid/stale transitions return 409
+`TIMER_CHANGED`; clients reread rather than replaying a write.
+
+Readiness totals count persisted joined browser sessions, not online presence.
+Participant responses never include aggregate counts. Readiness and timer writes
+check room phase and expiry atomically; timer writes also check facilitator
+capability and revision. Expiry never reveals cards or prevents card writing.

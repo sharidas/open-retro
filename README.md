@@ -339,6 +339,18 @@ continue to show individual cards. Group changes refresh while the Groups view
 is open. Conflicting changes ask you to review the latest layout before retrying;
 uncertain requests are never automatically replayed. Closure freezes grouping.
 
-The next planned chunk is a shared writing timer and participant readiness.
-Only the facilitator will see an anonymous ready/total count; participants will
-not see one another's readiness. Timer expiry will not automatically reveal cards.
+### Writing timer and readiness
+
+After check-in, the facilitator can start a timer, pause/resume it, or add
+minutes (up to 60 minutes remaining). The shared timer survives reloads.
+Expiry is a prompt: writing stays open until the facilitator reveals the board.
+
+Participants can choose **I’m finished writing** and undo with **I’m still
+writing**. Save or clear unsent drafts first. Only the facilitator sees the
+anonymous ready/total count. The total counts joined browser sessions, including
+people who have left; it is not live attendance. Facilitators contributing cards
+through the participant link use the same readiness controls.
+
+Timer changes use revision checks to prevent competing facilitator tabs from
+overwriting each other. Interrupted changes are reconciled without automatic
+retries. Participants receive only their own readiness, never the team count.

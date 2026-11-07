@@ -269,3 +269,19 @@ columns, and computes group totals from the current vote snapshot. Visible-tab
 polling has timeouts, backoff, and terminal-access handling. Mutations guard
 repeat clicks and invalidate older reads. Editing stays paused until the
 post-mutation snapshot succeeds. No names or actor identifiers are exposed.
+
+
+## Writing progress
+
+Migration 0009 adds a default-false readiness flag to anonymous participants and
+one optional timer row per room. Timer and readiness data cascade with room
+removal. Server deadlines persist running timers; paused timers persist remaining
+milliseconds. Conditional SQL updates enforce role, room eligibility, and timer
+revision, including concurrent facilitator tabs. Timer expiry has no lifecycle
+side effect.
+
+The browser anchors remaining time to server time and a monotonic local elapsed
+clock. Visible views poll at ten-second intervals with bounded backoff; mutations
+reconcile through fresh reads, without replay. Separate participant/facilitator
+projections keep counts out of participant responses. Joined-session counts are
+explicitly not live attendance. Readiness is self-reported and can be undone.

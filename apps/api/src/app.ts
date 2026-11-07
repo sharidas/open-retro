@@ -251,5 +251,40 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
       return c.json({ saved: true })
     })
   }
+  for (const role of ['participant', 'facilitator'] as const) {
+    const path = role === 'facilitator' ? '/api/rooms/:id/facilitator/writing-progress' : '/api/rooms/:id/writing-progress'
+    app.use(path, role === 'facilitator' ? authorizeFacilitator : authorizeCardAccess)
+    app.get(path, async c => {
+      const snapshot = await rooms.readWritingProgress(c.get('room').id, role === 'participant' ? c.get('ownerHash') : undefined)
+      return snapshot ? c.json(snapshot) : c.json({ error: 'WRITING_NOT_OPEN' }, 409)
+    })
+  }
+  app.use('/api/rooms/:id/ready', authorizeCardAccess)
+  app.put('/api/rooms/:id/ready', bodyLimit({ maxSize: 1024, onError: c => c.json({ error: 'BODY_TOO_LARGE' }, 413) }), async c => {
+    if (c.req.header('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') return c.json({ error: 'JSON_REQUIRED' }, 415)
+    let body: unknown
+    try { body = await c.req.json() } catch { return c.json({ error: 'INVALID_JSON' }, 400) }
+    const parsed = z.strictObject({ ready: z.boolean() }).safeParse(body)
+    if (!parsed.success) return c.json({ error: 'INVALID_READINESS' }, 400)
+    if (!await rooms.setReady(c.get('room').id, c.get('ownerHash'), parsed.data.ready)) return c.json({ error: 'WRITING_NOT_OPEN' }, 409)
+    return c.json({ saved: true })
+  })
+  app.use('/api/rooms/:id/facilitator/timer', authorizeFacilitator)
+  app.put('/api/rooms/:id/facilitator/timer', bodyLimit({ maxSize: 1024, onError: c => c.json({ error: 'BODY_TOO_LARGE' }, 413) }), async c => {
+    if (c.req.header('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/json') return c.json({ error: 'JSON_REQUIRED' }, 415)
+    let body: unknown
+    try { body = await c.req.json() } catch { return c.json({ error: 'INVALID_JSON' }, 400) }
+    const version = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER - 1)
+    const seconds = z.number().int().min(1).max(3600)
+    const parsed = z.discriminatedUnion('action', [
+      z.strictObject({ version, action: z.literal('start'), seconds }),
+      z.strictObject({ version, action: z.literal('extend'), seconds }),
+      z.strictObject({ version, action: z.literal('pause') }),
+      z.strictObject({ version, action: z.literal('resume') }),
+    ]).safeParse(body)
+    if (!parsed.success) return c.json({ error: 'INVALID_TIMER' }, 400)
+    if (!await rooms.changeTimer(c.get('room').id, c.get('facilitatorHash'), parsed.data)) return c.json({ error: 'TIMER_CHANGED' }, 409)
+    return c.json({ saved: true })
+  })
   return app
 }

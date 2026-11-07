@@ -154,3 +154,11 @@
 .groupCardLabel { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: .8rem; color: #52635a; margin-bottom: 12px; white-space: normal; }
 .groupCardLabel input { margin-right: 6px; }
 .renameGroup { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+.writingProgress { margin-top: 20px; padding: 18px 22px; border: 1px solid #d8e0d7; background: #fffefa; border-radius: 14px; }
+.timerSummary { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin-bottom: 14px; }
+.clock { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.timerControls { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.timerControls label { display: flex; flex-direction: column; gap: 6px; font-size: .8rem; }
+.timerControls input { width: 90px; padding: 10px; border: 1px solid #a5b6aa; border-radius: 8px; background: white; color: #203b33; }
+.readiness { font-weight: 600; margin-bottom: 6px; }
