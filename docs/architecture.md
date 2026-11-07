@@ -248,3 +248,24 @@ version guards for stale reads, and a full read after each mutation, including
 uncertain results. Mutations are never replayed automatically. Room metadata
 acceptance cannot regress complete check-in to open. Completed counts do not need
 recurring polling; room metadata continues enforcing expiry and availability.
+
+## Collaborative Grouping
+
+Migration 0008 stores one optional JSON grouping layout and revision per room,
+with cascading room deletion. Existing rooms need no backfill: absent rows read
+as revision zero with no groups. Cards remain in their original columns and
+votes remain attached to cards. JSON is bounded at the HTTP boundary, with
+unique group IDs and globally unique card membership within the layout.
+
+The local libSQL write transaction lazily creates the layout and conditionally
+updates its revision. SQL rechecks the role-specific capability, room phase,
+expiry, expected revision, and every card's room membership. Whole-layout
+optimistic concurrency deliberately rejects concurrent edits rather than merging
+ambiguous moves or losing another person's changes. This is intended for small
+retro boards; larger boards would warrant per-group commands and revisions.
+
+The Groups view reuses the existing card and vote controls, labels original
+columns, and computes group totals from the current vote snapshot. Visible-tab
+polling has timeouts, backoff, and terminal-access handling. Mutations guard
+repeat clicks and invalidate older reads. Editing stays paused until the
+post-mutation snapshot succeeds. No names or actor identifiers are exposed.

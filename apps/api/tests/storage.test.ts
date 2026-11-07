@@ -71,6 +71,7 @@ describe('SQLite room persistence', () => {
       { name: '0005_votes.sql' },
       { name: '0006_column_colors.sql' },
       { name: '0007_mood_check_in.sql' },
+      { name: '0008_card_groups.sql' },
     ])
   })
 

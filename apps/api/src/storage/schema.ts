@@ -50,3 +50,9 @@ export const moods = sqliteTable('moods', {
   primaryKey({ columns: [table.roomId, table.participantHash] }),
   foreignKey({ columns: [table.roomId, table.participantHash], foreignColumns: [participants.roomId, participants.tokenHash] }).onDelete('cascade'),
 ])
+
+export const roomGrouping = sqliteTable('room_grouping', {
+  roomId: text('room_id').primaryKey().references(() => rooms.id, { onDelete: 'cascade' }),
+  version: integer('version').notNull(),
+  groups: text('groups', { mode: 'json' }).$type<import('./groups.js').CardGroup[]>().notNull(),
+})

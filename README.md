@@ -324,3 +324,21 @@ The facilitator confirms **Start writing** when the team is ready. This freezes
 answers, reveals five aggregate counts, and enables private cards. No one must
 answer before writing can start. Results stay readable until room expiry or
 deletion. Facilitators use the participant link if they want to answer too.
+
+## Collaborative Card Grouping
+
+After reveal, open **Groups**. Participants and facilitators can select cards
+from any column, enter a name, and create a group. Select cards and use **Move
+selected** to move them into an existing group, or **Ungroup selected** to take
+them out. **Rename group** changes its label; **Ungroup all cards** dissolves the
+group without deleting anything. Empty groups disappear automatically.
+
+Cards retain their original text, column, and votes. Group totals are explicitly
+the sum of card votes, not unique people. The By column and Most voted views
+continue to show individual cards. Group changes refresh while the Groups view
+is open. Conflicting changes ask you to review the latest layout before retrying;
+uncertain requests are never automatically replayed. Closure freezes grouping.
+
+The next planned chunk is a shared writing timer and participant readiness.
+Only the facilitator will see an anonymous ready/total count; participants will
+not see one another's readiness. Timer expiry will not automatically reveal cards.

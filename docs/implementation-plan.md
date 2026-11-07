@@ -327,7 +327,20 @@ existing anonymous access rules and maximum of five columns.
   snapshots, facilitator confirmation, and atomic writing/reveal gates. Migration
   0007 preserves existing rooms. 236 tests, type checks, and production build
   passed; desktop browser checks covered answers, withdrawal, reload, and start.
-- [ ] **Collaborative grouping.** After reveal, participants and facilitators can
+- [x] **Collaborative grouping.** After reveal, participants and facilitators can
   group, name, move, and ungroup similar cards. Preserve original cards and votes;
   label group totals as the sum of card votes. Start with accessible explicit
   controls, then consider drag-and-drop. Freeze grouping at closure.
+  Completed with a Groups view, cross-column selection, create/rename/move/ungroup,
+  preserved card votes, and optimistic revision checks. 263 tests, type checks,
+  and production build passed. Desktop checks verified participant creation,
+  facilitator reads/rename, and ungrouping without losing cards or votes.
+  Browser closure check was blocked by automatic approval review; API and hook
+  tests verify closed grouping remains readable and rejects mutations.
+
+- [ ] **Writing timer and readiness (next chunk).** Facilitator starts, pauses,
+  and extends a shared writing timer. Timer expiry prompts the facilitator; it
+  never automatically reveals cards. Participants can mark themselves finished
+  or undo readiness. Only the facilitator sees an anonymous ready/total count,
+  never participant identities or individual indicators. Facilitators who write
+  via the participant link use the same readiness controls. This follows grouping.
