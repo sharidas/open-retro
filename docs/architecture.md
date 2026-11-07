@@ -35,7 +35,7 @@ preserving clear boundaries between:
 
 The phase sequence is strictly `writing → revealed → closed`. Repeated
 transitions, skipping reveal, and reopening a room are rejected. Deletion and
-expiration are separate retention operations to implement later, not alternate
+expiration are separate retention operations, not alternate
 phase transitions.
 
 Domain rules live in `apps/api/src/domain/room.ts` without HTTP or database
@@ -53,8 +53,8 @@ The SQLite adapter is in `apps/api/src/storage`. Drizzle queries use the local
 libSQL driver, with no remote service. The room repository validates creation
 through the domain model and stores random UUID IDs, columns as JSON, state,
 and creation/expiry timestamps in Unix milliseconds. The initial lifetime is
-24 hours. Reads return stored records, including expired ones; access denial
-and physical cleanup belong to task 15 before public release.
+24 hours. Storage reads may include expired records; HTTP authorization denies
+access at expiry and the background cleanup worker removes those records.
 
 Ordered SQL migrations run transactionally at startup and are recorded in
 `schema_migrations`. The first migration creates `rooms` with state, JSON array
@@ -90,7 +90,8 @@ Neither credential is sent in query strings, shareable participant links, or
 ordinary response payloads. As with all browser bearer tokens, scripts running
 on this origin can access browser storage; keep third-party scripts out of the
 application and continue treating user text as text. Sessions are anonymous,
-not proof of distinct people. Client credential cleanup remains retention work.
+not proof of distinct people. Browser credentials remain locally until site storage is cleared; they cannot
+authorize access after their server records are removed.
 
 ## Privacy Boundaries
 
@@ -285,3 +286,23 @@ clock. Visible views poll at ten-second intervals with bounded backoff; mutation
 reconcile through fresh reads, without replay. Separate participant/facilitator
 projections keep counts out of participant responses. Joined-session counts are
 explicitly not live attendance. Readiness is self-reported and can be undone.
+
+
+## Retention worker and deletion
+
+Facilitator deletion uses one conditional SQL DELETE, rechecking the capability
+hash and expiry at write time. Existing foreign keys cascade all dependent rows
+in the same transaction; no additional migration is needed. Joins also recheck
+room availability within the insert, preventing races with deletion/expiry.
+
+The Node API starts a cleanup worker after migrations. It deletes at most 100
+rooms per batch using the expiry index, then schedules the next batch after
+60 seconds. Runs never overlap. Shutdown cancels scheduling and waits for active
+cleanup before closing SQLite. Failures log a fixed message without database
+contents and retry on the next interval. Multiple API processes may safely run
+this idempotent deletion, subject to SQLite write contention.
+
+The frontend stops polling after confirmed deletion and unmounts the board.
+Other sessions discover loss of access through existing terminal responses.
+Historical backups, disk remnants, browser content, and external logs are outside
+live-row deletion; see README retention guidance for operator responsibilities.

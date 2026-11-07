@@ -85,9 +85,9 @@ the Docker build context.
 `apps/api/src/storage/rooms.ts` provides create/read operations, validating room
 rules before saving. New rooms receive a random UUID and expire 24 hours after
 creation; timestamps are Unix milliseconds. The creation API stores a separate
-facilitator secret hash; ordinary storage reads exclude it. General expiry
-enforcement and cleanup are task 15; the storage lookup currently returns expired
-records too. The protected facilitator endpoint already denies expired rooms.
+facilitator secret hash; ordinary storage reads exclude it. All room APIs deny expired access. A background worker removes expired records
+in bounded batches; low-level storage lookups may still return expired records
+until cleanup runs.
 The creation form starts with the Classic retro template. Add/remove columns
 within the one-to-five limit, then submit to save the room. Blank names show
 inline errors; API failures preserve your input. While saving, controls are
@@ -116,7 +116,8 @@ is blocked, access lasts only for the current page and a warning is displayed.
 Facilitator access does not create a participant session automatically. Both
 views show configured columns, phase, expiry, and a safe participant share link.
 Participants can write and view their own saved cards in the room. Facilitators
-can reveal cards and close the retrospective; deletion remains a later task.
+can reveal cards, close the retrospective, and permanently delete the room
+from Room details.
 
 ## Private Writing Board
 
@@ -354,3 +355,31 @@ through the participant link use the same readiness controls.
 Timer changes use revision checks to prevent competing facilitator tabs from
 overwriting each other. Interrupted changes are reconciled without automatic
 retries. Participants receive only their own readiness, never the team count.
+
+
+### Room deletion and retention
+
+Facilitators can open **Room details → Delete room**, review the warning, then
+choose **Permanently delete room**. Deletion works in any phase and removes the
+room, cards, votes, participant token hashes/readiness, moods, groups, and timer.
+There is no undo. Other open clients stop accessing it on their next request.
+The deleting facilitator sees a confirmation page; uncertain network responses
+trigger a status check and are never automatically replayed.
+
+Rooms expire 24 hours after creation. Access stops at expiry, independently of
+cleanup. The API runs cleanup on startup and every 60 seconds after the previous
+batch finishes, deleting at most 100 expired rooms per batch. Backlogs take
+multiple batches; downtime delays removal until the API starts again. Failures
+produce a generic log message and retry next minute. No separate paid scheduler
+or host installation is required.
+
+Deletion removes live database records, not every historical copy. SQLite free
+pages, journals, filesystem snapshots, backups, and data already copied or
+rendered in browsers may outlive the room. This is not secure disk erasure.
+The app creates no backups and does not log card text or credentials. Operators
+must separately set backup/snapshot and infrastructure-log retention, restrict
+access, and avoid logging request bodies, authorization headers, or private
+links. Restore operations must run expiry cleanup before exposing restored data;
+unexpired rooms manually deleted after a backup can reappear after restoration.
+Browser credentials and unsent drafts are not remotely erased; stale credentials
+no longer authorize access. Clear site storage to remove local credentials.

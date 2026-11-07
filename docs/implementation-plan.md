@@ -269,11 +269,19 @@ Demo: run a complete short retro from creation through discussion and closure.
 
 ## Milestone 6: Retention and Release Readiness
 
-- [ ] **15 — Delete and expire rooms.** Implement facilitator deletion, cascading
+- [x] **15 — Delete and expire rooms.** Implement facilitator deletion, cascading
   removal of cards/votes/tokens, expiry access checks, and scheduled cleanup.
   Done when deleted and expired rooms are inaccessible and cleanup removes all
   associated database records. Document backup/log retention separately.
   Learn: data lifecycle and background jobs.
+  Completed with facilitator-only confirmed deletion in Room details, atomic
+  capability checks, and cascading removal of all room data. Startup and
+  minute-interval cleanup processes at most 100 expired rooms per batch without
+  overlapping runs. Joins recheck room availability atomically. Backup, log,
+  browser, and disk-remnant retention limits are documented separately.
+  All 312 tests (222 API and 90 web), TypeScript checks, production build, and
+  diff checks passed. Destructive flows were verified using isolated temporary
+  databases and component tests; no manual browser deletion was performed.
 - [ ] **16 — Add abuse protection.** Choose documented limits for room creation,
   joining, card size/count, and request frequency. Avoid persistent IP storage
   in application data. Return useful errors when limits are reached.

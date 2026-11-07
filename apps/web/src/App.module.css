@@ -162,3 +162,5 @@
 .timerControls label { display: flex; flex-direction: column; gap: 6px; font-size: .8rem; }
 .timerControls input { width: 90px; padding: 10px; border: 1px solid #a5b6aa; border-radius: 8px; background: white; color: #203b33; }
 .readiness { font-weight: 600; margin-bottom: 6px; }
+
+.deleteControl { border-top: 1px solid #d8e0d7; margin-top: 16px; padding-top: 16px; }

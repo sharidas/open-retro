@@ -149,7 +149,7 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
     const room = await rooms.find(c.req.param('id'))
     if (!room || room.expiresAt <= clock()) return c.json({ error: 'ROOM_NOT_FOUND' }, 404)
     if (room.state === 'closed') return c.json({ error: 'ROOM_CLOSED' }, 409)
-    await rooms.joinParticipant(room.id, hashSecret(token))
+    if (!await rooms.joinParticipant(room.id, hashSecret(token))) return c.json({ error: 'ROOM_NOT_FOUND' }, 404)
     return c.json({ room })
   })
 
@@ -204,6 +204,10 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
   app.post('/api/rooms/:id/start-writing', async c => {
     const room = await rooms.startWriting(c.get('room').id, c.get('facilitatorHash'))
     return room ? c.json({ room }) : c.json({ error: 'ROOM_CHANGED' }, 409)
+  })
+  app.delete('/api/rooms/:id/facilitator', async c => {
+    const deleted = await rooms.deleteRoom(c.get('room').id, c.get('facilitatorHash'))
+    return deleted ? c.body(null, 204) : c.json({ error: 'ROOM_CHANGED' }, 409)
   })
   app.get('/api/rooms/:id/facilitator', (c) => c.json({ room: c.get('room') }))
   app.get('/api/rooms/:id/facilitator/votes', async (c) => {

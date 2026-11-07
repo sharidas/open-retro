@@ -8,10 +8,11 @@ const session: RoomSession = { id: 'room-test', role: 'participant', credential:
 let root: Root
 let latest: ReturnType<typeof useRoom>
 let hidden = false
+let enabled = true
 let fetchMock: ReturnType<typeof vi.fn>
 const room = (state: Room['state'] = 'writing'): Room => ({ id: session.id, columns: ['A'], state, expiresAt: Date.now() + 86_400_000 })
 const response = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
-function Probe() { latest = useRoom(session); return null }
+function Probe() { latest = useRoom(session, enabled); return null }
 async function mount(strict = false) {
   await act(async () => { root.render(strict ? createElement(StrictMode, null, createElement(Probe)) : createElement(Probe)) })
 }
@@ -21,7 +22,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date('2026-11-04T12:00:00Z'))
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-  hidden = false
+  hidden = false; enabled = true
   vi.spyOn(document, 'hidden', 'get').mockImplementation(() => hidden)
   fetchMock = vi.fn().mockImplementation(async () => response(200, { room: room() }))
   vi.stubGlobal('fetch', fetchMock)
@@ -153,4 +154,13 @@ it('does not regress completed check-in when an older room snapshot arrives', as
   await act(async () => latest.acceptRoom({ ...room(), checkIn: 'complete' }))
   await advance(POLL_INTERVAL_MS)
   expect(latest.room?.checkIn).toBe('complete')
+})
+
+it('stops polling and ignores in-flight reads after confirmed deletion', async () => {
+  let resolve!: (value: Response) => void
+  fetchMock.mockImplementationOnce(() => new Promise<Response>(done => { resolve = done }))
+  await mount(); enabled = false; await mount()
+  await act(async () => resolve(response(200, { room: room() })))
+  await advance(POLL_INTERVAL_MS * 3)
+  expect(latest.room).toBeNull(); expect(fetchMock).toHaveBeenCalledOnce()
 })

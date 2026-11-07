@@ -1,3 +1,4 @@
+import { DeleteControl } from './DeleteControl'
 import { WritingProgress } from './WritingProgress'
 import { MoodCheckIn } from './MoodCheckIn'
 import { columnStyle } from './templates'
@@ -12,12 +13,17 @@ import { RevealControl } from './RevealControl'
 import { useRoom } from './useRoom'
 
 export function RoomPage({ session }: { session: RoomSession }) {
-  const { room, error, loading, terminal, refresh, acceptRoom } = useRoom(session)
+  const [deleted, setDeleted] = useState(false)
+  const { room, error, loading, terminal, refresh, acceptRoom } = useRoom(session, !deleted)
   const [retainWriting, setRetainWriting] = useState(false)
   const [hasUnsentWriting, setHasUnsentWriting] = useState(false)
   useEffect(() => { if (room?.state === 'writing' && room.checkIn !== 'open') setRetainWriting(true) }, [room?.state, room?.checkIn])
   const participantLink = new URL(`/rooms/${session.id}`, location.origin).href
   const available = !error && !terminal
+
+  if (deleted) return <main className={styles.page}><h1>Room deleted</h1>
+    <p role="status">The room and its stored retro data have been removed. Its links no longer work.</p>
+    <a href="/">Start another retrospective</a></main>
 
   return <main className={`${styles.page} ${styles.workspace}`}>
     <header className={styles.roomHeader}>
@@ -44,6 +50,8 @@ export function RoomPage({ session }: { session: RoomSession }) {
             <p className={styles.hint}>No names or accounts. Room expiry: {new Date(room.expiresAt).toLocaleString()} (your local time).</p>
             {session.role === 'participant' ? <p className={styles.hint}>This browser remembers your session for this room. Clearing site storage or changing browsers creates a separate participant.</p> :
               <p className={styles.hint}>Your private link was removed from the address bar. This tab remembers facilitator access; save the original link privately for future use. Use the participant link separately to contribute cards or votes.</p>}
+            {session.role === 'facilitator' && <DeleteControl session={session} disabled={!available}
+              onDeleted={() => setDeleted(true)} onRefresh={refresh} />}
           </div>
         </details>
       </section>
