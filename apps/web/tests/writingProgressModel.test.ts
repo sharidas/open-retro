@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { formatTime, parseWritingProgress, remainingTime } from '../src/writingProgress'
+import { formatTime, parseWritingProgress, remainingTime } from '../src/writingProgressModel'
 const data = { serverNow: 100000, timer: { version: 1, status: 'running' as const, endsAt: 160000, remainingMs: 0 }, ownReady: false }
 it('uses server time and elapsed duration, clamping expiration to zero', () => {
   expect(remainingTime(data, 15000)).toBe(45000)

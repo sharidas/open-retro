@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { RoomSession } from './session'
 import { useWritingProgress } from './useWritingProgress'
-import { formatTime, remainingTime } from './writingProgress'
+import { formatTime, remainingTime } from './writingProgressModel'
 import styles from './App.module.css'
 
 export function WritingProgress({ session, available, hasUnsentWriting, onRoomRefresh }: {
