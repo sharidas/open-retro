@@ -67,10 +67,12 @@ export function useRoom(session: RoomSession, enabled = true) {
         mayJoin = false
         if (disposed) return
         if (!response.ok) {
-          stopped = [401, 404, 409].includes(response.status)
+          stopped = [401, 404, 409, 422].includes(response.status)
           setTerminal(stopped)
           failures += 1
-          setError(response.status === 401 ? 'Your room access was not accepted. Reopen the correct room link.' :
+          setError(response.status === 422 ? 'This room has reached its limit of 100 joined browser sessions.' :
+            response.status === 429 ? 'Room updates are temporarily limited. We will retry shortly; your unsent writing stays here.' :
+            response.status === 401 ? 'Your room access was not accepted. Reopen the correct room link.' :
             response.status === 404 ? 'This room is unavailable. It may have expired or been deleted.' :
             response.status === 409 ? 'This room is closed to new participants.' :
             'Room updates are interrupted. Showing the last known state; saving is paused. We will retry automatically.')

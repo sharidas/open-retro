@@ -49,7 +49,9 @@ export function App() {
         signal: controller.signal,
       })
       if (!response.ok) {
-        setError(response.status === 413 ? 'Column names are too long together. Shorten them and try again.' :
+        setError(response.status === 429 ? 'Room creation is temporarily limited. Wait before trying again; your settings are preserved.' :
+          response.status === 422 ? 'The server room limit has been reached. Try again after old rooms are deleted or expire.' :
+          response.status === 413 ? 'Column names are too long together. Shorten them and try again.' :
           response.status === 400 ? 'Check your column names: use one to five nonempty names.' :
           'The server could not create your room. Please try again in a moment.')
         return

@@ -265,7 +265,7 @@ Application handlers do not log request bodies, authorization headers, raw
 secrets, or database error details. Future hosting/proxy logging must follow the
 same policy; transport HTTPS must be configured for a public deployment.
 
-Rate limiting and broader abuse protection remain task 16. This API is currently
+Basic rate and storage limits are described below. This API is currently
 for local development, not a public deployment.
 
 ## Close Room
@@ -390,3 +390,23 @@ There is no public cleanup endpoint. The Node process removes up to 100 expired
 rooms at startup and once per minute after each batch completes. APIs deny expired
 access before physical cleanup. Removed participant/facilitator capabilities no
 longer authorize reads or writes, and join returns 404 for a removed room.
+
+
+## Abuse protection
+
+Middleware applies process-local fixed windows before route authorization:
+12000 requests/minute globally, 30 creation attempts/hour globally, 120 join
+attempts/minute/room, and 120 requests/minute/bearer token. Forwarded-IP headers
+are ignored. Limits never grant room access. HTTP 429 returns `RATE_LIMITED`, a
+safe message, `retryAfter` seconds, and the matching `Retry-After` header. Normal
+no-store headers apply. The counter map is bounded at 10000 entries and rejects
+new keys if full; expired counters are swept lazily. Process restarts reset it.
+
+Migration 0010 adds atomic insert triggers: 1000 stored rooms, 100 participants
+per room, 500 cards per room, and 50 cards per participant. Existing records are
+preserved. A rejoin by an existing token does not consume participant capacity.
+Known trigger failures return HTTP 422 with `RETRO_ROOM_LIMIT`,
+`RETRO_PARTICIPANT_LIMIT`, or `RETRO_CARD_LIMIT` and a safe explanatory message.
+Unknown database errors remain generic 500 responses. No SQL or parameters leak.
+Deletion/cleanup frees storage capacity. Existing card-size and body-size checks
+continue to apply. Clients preserve drafts and do not replay rejected mutations.

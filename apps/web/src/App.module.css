@@ -164,3 +164,14 @@
 .readiness { font-weight: 600; margin-bottom: 6px; }
 
 .deleteControl { border-top: 1px solid #d8e0d7; margin-top: 16px; padding-top: 16px; }
+
+/* Larger touch targets and readable fields on phones/tablets. */
+@media (pointer: coarse), (max-width: 540px) {
+  :global(button), :global(summary), :global(select) { min-height: 44px; }
+  :global(input:not([type="checkbox"])), :global(textarea), :global(select) { font-size: 16px; }
+  .columnRow { flex-wrap: wrap; gap: 10px; }
+  .columnRow .field { flex-basis: 100%; }
+  .remove { margin-top: 0; }
+  .columnActions { flex-wrap: wrap; }
+  .page { padding-inline: 16px; }
+}

@@ -171,7 +171,7 @@ Demo: create a five-column room and join it from a separate browser session.
   existence. All 87 tests, TypeScript checks, production build, and a live API
   privacy check passed. Text is capped at 2000 characters; the writing interface
   remains task 08, editing/deletion task 09, and reveal task 10.
-- [ ] **08 — Build the writing board.** Render configured columns and allow
+- [x] **08 — Build the writing board.** Render configured columns and allow
   participants to submit and see their own cards. Include loading/error states
   and the brief warning against entering secrets or sensitive information.
   Done when two participants can write privately, including on a narrow screen.
@@ -182,10 +182,11 @@ Demo: create a five-column room and join it from a separate browser session.
   confirmed private cards and reload persistence; facilitators saw no card text.
   A stale-phase rejection preserved the editable draft and disabled saving.
   All 87 existing tests, TypeScript checks, and production build passed.
-  Narrow-screen verification remains outstanding: the browser viewport override
+  Initial narrow-screen verification was blocked: the browser viewport override
   kept reporting a 1280px viewport despite a requested 375px width. Responsive
-  styles are implemented, but this task stays unchecked until that acceptance
-  check is verified.
+  styles were implemented. Follow-up verification on 2026-11-14 successfully
+  saved a private card at 375px, with no horizontal overflow at 375px or 320px.
+  This completes the missing narrow-screen acceptance check.
 - [x] **09 — Edit and delete owned cards.** Add API authorization and UI controls.
   Done when owners can change their cards during writing, while another token,
   another room, or a later phase cannot authorize the same changes.
@@ -282,11 +283,19 @@ Demo: run a complete short retro from creation through discussion and closure.
   All 312 tests (222 API and 90 web), TypeScript checks, production build, and
   diff checks passed. Destructive flows were verified using isolated temporary
   databases and component tests; no manual browser deletion was performed.
-- [ ] **16 — Add abuse protection.** Choose documented limits for room creation,
+- [x] **16 — Add abuse protection.** Choose documented limits for room creation,
   joining, card size/count, and request frequency. Avoid persistent IP storage
   in application data. Return useful errors when limits are reached.
   Done when limits are enforced at the API and cannot bypass room permissions.
   Learn: resource limits and operational privacy.
+  Completed with atomic database capacity triggers, bounded process-local request
+  counters, safe 422/429 errors, Retry-After, and input preservation. No IP storage
+  or forwarded-IP trust. Documented shared quotas and single-process limitations.
+  Added filename portability checks, Windows-compatible dev command quoting,
+  and mobile touch/input improvements. 325 tests, type checks, production build,
+  and portability regression probes passed. Browser checks verified private card
+  entry at 375px and overflow-free layout at 320px; physical-device and native
+  macOS/Windows checks remain in task 17.
 - [ ] **17 — Verify the full experience.** Add a multi-session end-to-end test
   covering the main flow; check keyboard use, mobile layout, errors, and secret
   exposure in responses/logs. Fix issues discovered by these checks.

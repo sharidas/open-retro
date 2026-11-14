@@ -9,10 +9,11 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "dev": "concurrently --kill-others --names api,web 'npm run dev -w @open-retro/api' 'npm run dev -w @open-retro/web'",
-    "check": "npm run check --workspaces",
+    "dev": "concurrently --kill-others --names api,web \"npm run dev -w @open-retro/api\" \"npm run dev -w @open-retro/web\"",
+    "check": "npm run check:portability && npm run check --workspaces",
     "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "check:portability": "node scripts/check-portability.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

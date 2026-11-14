@@ -306,3 +306,23 @@ The frontend stops polling after confirmed deletion and unmounts the board.
 Other sessions discover loss of access through existing terminal responses.
 Historical backups, disk remnants, browser content, and external logs are outside
 live-row deletion; see README retention guidance for operator responsibilities.
+
+
+## Resource protection and portability
+
+SQLite insert triggers serialize capacity enforcement with the write, avoiding
+count-then-insert races. Limits apply across database connections and API
+processes. Drizzle/libSQL constraint errors are mapped only from known trigger
+messages; arbitrary SQL and request parameters are never returned.
+
+Request frequency is bounded separately by middleware using in-memory fixed
+windows. Counters use hashed credentials/room IDs; no IP addresses are retained.
+The global ceiling bounds invalid/unauthenticated traffic, and map capacity bounds
+memory use from invented identifiers. This is a single-process local MVP control,
+not a distributed or edge rate limiter. See README for quotas and tradeoffs.
+
+The root check command scans filenames using portable Node filesystem APIs.
+It rejects case-folded module basename collisions and Windows-invalid names;
+Linux TypeScript checking catches incorrectly cased imports. Docker avoids host
+Node dependencies, while command quoting also supports native Windows shells.
+Responsive checks are recorded separately from real OS/browser/device coverage.

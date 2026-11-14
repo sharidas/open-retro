@@ -73,6 +73,7 @@ describe('SQLite room persistence', () => {
       { name: '0007_mood_check_in.sql' },
       { name: '0008_card_groups.sql' },
       { name: '0009_writing_progress.sql' },
+      { name: '0010_capacity_limits.sql' },
     ])
   })
 
