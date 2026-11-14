@@ -301,6 +301,15 @@ Demo: run a complete short retro from creation through discussion and closure.
   exposure in responses/logs. Fix issues discovered by these checks.
   Done when the core flow passes and known limitations are documented.
   Learn: integration testing and usability verification.
+  First chunk complete: `apps/api/tests/workflow.test.ts` exercises one full
+  retrospective using facilitator and two independent participant credentials
+  against an isolated real SQLite file. Covers mood privacy, writing ownership,
+  timer/readiness persistence after reopening the database, reveal, votes/undo,
+  collaborative grouping/conflicts, closure, and cascading deletion. Every
+  response after creation is checked for raw credentials and their hashes.
+  Focused workflow test and project checks passed. This is API integration
+  coverage, not browser end-to-end coverage. Keep task 17 open until the browser,
+  keyboard, OS/device, and log checks in `docs/release-verification.md` pass.
 - [ ] **18 — Package local self-hosting.** Add a Docker Compose setup, persistent
   storage configuration, cleanup scheduling, and setup/operation instructions.
   Done when a fresh installation runs a full retro and survives a restart.

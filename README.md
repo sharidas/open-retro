@@ -437,3 +437,22 @@ Modern desktop browsers and iOS/Android browsers are targets; native Windows,
 macOS, Safari/iOS, Android, on-screen keyboards, and the full mobile retro flow
 still require release verification. The development server binds to localhost,
 so a phone cannot access it directly with the default Compose configuration.
+
+
+### Full retrospective regression check
+
+Run the isolated API workflow test in Docker:
+
+```sh
+docker compose exec -T dev npm test -w @open-retro/api -- tests/workflow.test.ts
+```
+
+It uses a temporary SQLite file and three separate credentials (facilitator plus
+two participants), covering creation, check-in, private writing, timer/readiness,
+database reopening, reveal, votes/undo, grouping, closure, and deletion. It does
+not alter rooms in your development database. Response checks guard against
+credential/hash disclosure after the one-time creation response.
+
+This checks the HTTP application and database together; it does not drive a
+browser or exercise the network server. Remaining release checks are tracked in
+[release verification](docs/release-verification.md).
