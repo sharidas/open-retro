@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { RoomSession } from './session'
-import { parseWritingProgress, type WritingProgress } from './writingProgress'
+import { parseWritingProgress, type WritingProgress } from './writingProgressModel'
 export type ProgressChange = { ready: boolean } | { action: 'start' | 'pause' | 'resume' | 'extend'; seconds?: number }
 export function useWritingProgress(session: RoomSession, available: boolean, onRoomRefresh: () => void) {
   const [snapshot, setSnapshot] = useState<WritingProgress | null>(null)
