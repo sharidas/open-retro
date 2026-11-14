@@ -1,3 +1,5 @@
+import { abuseProtection } from './rate-limit.js'
+import { capacityError } from './storage/capacity.js'
 import { MOODS } from './storage/moods.js'
 import { Hono, type Handler, type MiddlewareHandler } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
@@ -39,8 +41,11 @@ export function createApp(rooms: Rooms, clock: () => number = Date.now) {
     c.header('Referrer-Policy', 'no-referrer')
     await next()
   })
+  app.use('/api/*', abuseProtection(clock))
   // Never include request bodies, authorization headers, or database errors in logs/responses.
   app.onError((error, c) => {
+    const capacity = capacityError(error)
+    if (capacity) return c.json(capacity, 422)
     if (error instanceof RoomRuleError) return c.json({ error: error.code }, 400)
     return c.json({ error: 'INTERNAL_ERROR' }, 500)
   })

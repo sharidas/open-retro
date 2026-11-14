@@ -383,3 +383,57 @@ links. Restore operations must run expiry cleanup before exposing restored data;
 unexpired rooms manually deleted after a backup can reappear after restoration.
 Browser credentials and unsent drafts are not remotely erased; stale credentials
 no longer authorize access. Clear site storage to remove local credentials.
+
+
+### Resource limits
+
+The local MVP applies these fixed limits:
+
+| Resource | Limit |
+| --- | --- |
+| Stored rooms (including expired rooms awaiting cleanup) | 1000 per database |
+| Joined browser sessions | 100 per room |
+| Saved cards | 50 per participant, 500 per room |
+| Card text | 2000 characters (existing validation) |
+| Room creation attempts | 30 per hour, shared by the API process |
+| Join attempts | 120 per minute per room |
+| Requests carrying a well-formed bearer token | 120 per minute per token |
+| All API requests | 12000 per minute per process |
+
+Database triggers enforce insert limits atomically, including across independent
+connections. Existing sessions can rejoin full rooms. Existing data above a new
+limit is preserved; further inserts stop until capacity is available. Removing
+cards or rooms frees capacity. Creation and card forms preserve unsent input when
+limits are reached. Capacity errors return 422; rate limits return 429 with a
+`Retry-After` header in seconds. Mutations are not automatically replayed.
+
+Rate counters store hashes of tokens/room identifiers in memory, never IPs or
+raw credentials. Forwarded-IP headers are ignored. At most 10000 counters exist;
+new keys are throttled when full. Expired counters are swept lazily, at most once
+per minute. Fixed windows start with their first request. Restarting the API
+resets counters; separate API processes do not share them. An attacker rotating
+tokens can avoid the per-token budget, but not the shared ceiling or database
+caps. These safeguards do not provide DDoS protection or a public-hosting security
+boundary. Shared quotas can also temporarily affect legitimate users.
+
+### Operating systems and mobile browsers
+
+Docker development remains the preferred path on Linux, macOS (including Apple
+Silicon), and Windows with Linux containers. No CPU architecture is forced.
+Use the same `docker compose up --build` and verification commands on each host.
+The native development command now uses quoting compatible with Windows shells.
+After changing package scripts or adding tooling, rebuild the development image.
+
+`npm run check` includes a portable Node filename check. It rejects names that
+collide on case-insensitive filesystems, including extensionless `.ts`/`.tsx`
+imports, and names invalid on Windows. Use distinct module basenames and exact
+import casing; TypeScript checks run in the Linux container too.
+
+The responsive UI uses wrapping layouts, touch targets of at least 44px height
+for buttons/selects/summaries on small screens, and 16px editing fields. A browser
+viewport check verified private card entry at 375px and no horizontal overflow
+at 375px/320px. This is responsive browser testing, not physical-device coverage.
+Modern desktop browsers and iOS/Android browsers are targets; native Windows,
+macOS, Safari/iOS, Android, on-screen keyboards, and the full mobile retro flow
+still require release verification. The development server binds to localhost,
+so a phone cannot access it directly with the default Compose configuration.

@@ -50,3 +50,11 @@ it('rejects malformed room colours and safely falls back for older responses', (
   for (const columnColors of [[], ['sage', 'blue'], ['url(bad)'], null]) expect(isRoom({ ...room, columnColors }, 'room')).toBe(false)
   expect(columnStyle('url(bad)')).toEqual(columnStyle('sage'))
 })
+
+it.each([422, 429])('preserves room settings and does not replay creation after HTTP %s', async status => {
+  fetchMock.mockResolvedValueOnce(new Response('{}', { status }))
+  await click('4Ls'); await click('Create retrospective')
+  expect(names()).toEqual(['Liked', 'Learned', 'Lacked', 'Longed for'])
+  expect(document.querySelector('[role="alert"]')).not.toBeNull()
+  expect(fetchMock).toHaveBeenCalledOnce()
+})

@@ -93,7 +93,9 @@ export function WritingBoard({ session, columns, columnColors, phase, available 
       })
       if (!mounted.current) return
       if (!response.ok) {
-        const message = response.status === 409 ? 'Writing is no longer available. Copy any unsent text before reloading the room.' :
+        const message = response.status === 429 ? 'Too many requests. Wait a minute before saving again. Your draft is still here.' :
+          response.status === 422 ? 'Card limit reached: 50 per participant or 500 per room. Remove an existing card before adding another. Your draft is preserved.' :
+          response.status === 409 ? 'Writing is no longer available. Copy any unsent text before reloading the room.' :
           response.status === 401 ? 'Your session was not accepted. Copy any unsent text before reopening the participant link.' :
           response.status === 404 ? 'The room is unavailable. Copy any unsent text before leaving.' :
           response.status === 400 || response.status === 413 ? 'Check your card: use 1–2000 characters and an existing column.' :
