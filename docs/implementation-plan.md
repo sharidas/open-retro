@@ -244,7 +244,7 @@ Demo: reveal once and watch both participant boards update.
   tests (including 21 voting tests), type checks, production build, and a live
   concurrency/privacy check passed. Independent database connections cannot
   overspend the budget. Task 08's narrow-screen check remains pending.
-- [ ] **13 — Build voting and discussion views.** Show vote totals, remaining
+- [x] **13 — Build voting and discussion views.** Show vote totals, remaining
   votes, and a way to prioritize most-voted cards without exposing voters.
   Done when participants can add/remove their own votes and see shared totals.
   Learn: shared state and interaction feedback.
@@ -252,9 +252,12 @@ Demo: reveal once and watch both participant boards update.
   shared totals, facilitator totals-only view, and global most-voted ordering.
   All 180 tests (144 API/domain and 36 frontend), TypeScript checks, and production
   build passed. Browser verification reached the revealed five-column board;
-  final budget/undo, peer totals, ordering, reload, and closed-view checks remain
-  pending because the browser tool connection failed. Leave this task unchecked
-  until those browser checks are completed.
+  further checks were initially blocked by the browser connection.
+  Follow-up browser verification on 2026-11-16 passed three-vote exhaustion,
+  undo/budget recovery, independent selections, shared peer totals, cross-column
+  most-voted ordering, and persistence after reopening sessions/server restart.
+  Closed-view verification is recorded under task 14. Task 13 is now complete;
+  see `docs/release-verification.md` for the reproducible scenario.
 - [x] **14 — Close the room.** Add facilitator-only closure and read-only UI.
   Done when closed rooms reject card mutations and votes, including from stale
   clients, while remaining readable until deletion or expiry.
@@ -316,6 +319,11 @@ Demo: run a complete short retro from creation through discussion and closure.
   check-in and room-deletion cancellation. All 99 frontend tests, project checks,
   and production build passed. Full keyboard/screen-reader and browser workflow
   coverage remains open.
+  Third chunk complete: browser voting and timer/readiness checks passed with
+  two origin-isolated participants and a separate facilitator. Recorded exact
+  outcomes and a repeatable scenario in `docs/release-verification.md`. No code
+  changes were necessary. Full browser closure, log inspection, network recovery,
+  and native OS/device checks remain open.
 - [ ] **18 — Package local self-hosting.** Add a Docker Compose setup, persistent
   storage configuration, cleanup scheduling, and setup/operation instructions.
   Done when a fresh installation runs a full retro and survives a restart.

@@ -35,11 +35,50 @@ All 99 frontend tests, TypeScript/portability checks, and production build passe
 Other confirmation paths have component coverage; screen-reader announcements,
 full keyboard traversal, and physical-device behavior remain to be verified.
 
+## Multi-session voting checkpoint — 2026-11-16
+
+Verified in the in-app browser against the local Docker application. Participant
+A used localhost and participant B used 127.0.0.1 to isolate browser storage.
+A separate facilitator tab created the room and revealed the test cards.
+
+| Check | Observed result |
+| --- | --- |
+| Private writing | Each participant saw only their own two cards before reveal. |
+| Timer | Started at 5 minutes, paused at 4:56, extended to 9:56, and resumed. |
+| Timer persistence | Participant B reloaded and saw the same paused 9:56 timer. |
+| Readiness privacy | A marked ready; facilitator saw 1 of 2. Undo returned it to 0 of 2. Participant pages showed only their own choice. |
+| Reveal | Both participant pages adopted the shared four-card board. |
+| Vote limit | A used three votes; budget became 0 of 3 and the fourth unselected card was disabled. |
+| Independent votes | B retained 3 of 3 votes and no selected cards despite A's votes. |
+| Shared totals | B voted for Reduce interruptions; its total became 2 in both sessions. |
+| Undo | A removed the Helpful reviews vote; its total became 0 and A regained one vote. |
+| Ordering | Most voted ranked Reduce interruptions (2), Clear sprint goals (1), then the two zero-vote cards. |
+| Persistence | After browser tabs were lost and the Docker service restarted, reopening A showed 1 of 3 remaining with two selected cards. B showed 2 of 3 with only Reduce interruptions selected. |
+
+No application defect was found in these checks. No room closure or deletion was
+performed during this checkpoint. Task 14 records the prior browser closure and
+read-only checks; creation-through-closure in a single multi-session browser run
+remains below. OS/device coverage is unchanged.
+
+### Repeating the voting check
+
+1. Create a room without mood check-in. Open its facilitator link separately.
+2. Join the participant link on localhost and 127.0.0.1 as independent sessions.
+3. Save two uniquely named cards from each participant and verify private reads.
+4. Start/pause/extend/resume the timer; mark ready and undo, checking facilitator
+   counts and participant privacy. Reload a participant while paused.
+5. Reveal the cards. Cast three votes from A and confirm a fourth is disabled.
+6. Vote on one of the same cards from B; verify the total reaches two while each
+   participant's selections/budget remain independent.
+7. Undo another A vote. Verify budget recovery and the lower shared total.
+8. Select Most voted and verify descending totals across columns. Reopen both
+   participant links and verify saved selections, budgets, and totals.
+
 ## Remaining browser checkpoint
 
 - [ ] Run creation through closure with facilitator and two isolated browser sessions.
-- [ ] Verify vote budget, undo, peer totals, most-voted ordering, and reload (task 13).
-- [ ] Verify timer pause/resume/extend and readiness changes across sessions.
+- [x] Verify vote budget, undo, peer totals, most-voted ordering, and reload (task 13).
+- [x] Verify timer pause/resume/extend and readiness changes across sessions.
 - [ ] Navigate forms, dialogs, cards, and groups using only the keyboard.
 - [ ] Verify focus visibility, understandable labels, and error announcements.
 - [ ] Verify offline/reconnect and rejected requests preserve drafts without replay.
