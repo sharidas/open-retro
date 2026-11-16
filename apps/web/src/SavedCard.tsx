@@ -1,3 +1,4 @@
+import { useConfirmationFocus } from './useConfirmationFocus'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { isCard, type Card } from './card'
 import type { RoomSession } from './session'
@@ -10,6 +11,9 @@ type Props = {
 }
 export function SavedCard({ card, session, columnCount, disabled, ended = false, onActive, onBusy, onAccessLost, onUpdated, onDeleted }: Props) {
   const [mode, setMode] = useState<'view' | 'edit' | 'delete'>('view')
+  const { triggerRef: deleteTrigger, warningRef } = useConfirmationFocus(mode === 'delete')
+  const editTrigger = useRef<HTMLButtonElement>(null)
+  const previousMode = useRef(mode)
   const [text, setText] = useState(card.text)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
@@ -21,7 +25,11 @@ export function SavedCard({ card, session, columnCount, disabled, ended = false,
     mounted.current = true
     return () => { mounted.current = false; controller.current?.abort() }
   }, [])
-  useEffect(() => { if (mode === 'edit') editor.current?.focus() }, [mode])
+  useEffect(() => {
+    if (mode === 'edit') editor.current?.focus()
+    else if (mode === 'view' && previousMode.current === 'edit') editTrigger.current?.focus()
+    previousMode.current = mode
+  }, [mode])
 
   function start(next: 'edit' | 'delete') {
     if (disabled) return
@@ -103,11 +111,11 @@ export function SavedCard({ card, session, columnCount, disabled, ended = false,
       </div>
     </form> : <p className={styles.cardText}>{card.text}</p>}
     {mode === 'view' && <div className={styles.cardActions}>
-      <button type="button" className={styles.secondary} disabled={disabled} onClick={() => start('edit')}>Edit card</button>
-      <button type="button" className={styles.secondary} disabled={disabled} onClick={() => start('delete')}>Delete card</button>
+      <button ref={editTrigger} type="button" className={styles.secondary} disabled={disabled} onClick={() => start('edit')}>Edit card</button>
+      <button ref={deleteTrigger} type="button" className={styles.secondary} disabled={disabled} onClick={() => start('delete')}>Delete card</button>
     </div>}
     {mode === 'delete' && <div>
-      <p>Delete this card? This cannot be undone.</p>
+      <p ref={warningRef} tabIndex={-1} className={styles.confirmationWarning}>Delete this card? This cannot be undone.</p>
       <div className={styles.cardActions}>
         <button type="button" className={styles.secondary} disabled={disabled || pending} onClick={() => void change()}>{pending ? 'Deleting…' : 'Confirm delete'}</button>
         <button type="button" className={styles.secondary} disabled={pending} onClick={cancel}>Keep card</button>

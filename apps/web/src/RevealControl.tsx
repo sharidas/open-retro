@@ -1,3 +1,4 @@
+import { useConfirmationFocus } from './useConfirmationFocus'
 import { useEffect, useRef, useState } from 'react'
 import type { RoomSession } from './session'
 import { isRoom, type Room } from './useRoom'
@@ -7,6 +8,7 @@ export function RevealControl({ session, disabled, onRevealed, onRefresh }: {
   session: RoomSession; disabled: boolean; onRevealed: (room: Room) => void; onRefresh: () => void
 }) {
   const [confirming, setConfirming] = useState(false)
+  const { triggerRef, warningRef } = useConfirmationFocus(confirming)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
   const busy = useRef(false)
@@ -44,8 +46,8 @@ export function RevealControl({ session, disabled, onRevealed, onRefresh }: {
   return <section className={styles.facilitatorBar} aria-label="Facilitator controls">
     <h2>Ready to share?</h2>
     <p>Check that everyone has finished writing before revealing the cards.</p>
-    {!confirming ? <button className={styles.primary} disabled={disabled} onClick={() => setConfirming(true)}>Reveal cards</button> : <>
-      <p>Reveal all cards? This ends writing for everyone. Unsent drafts are not included. This cannot be reversed.</p>
+    {!confirming ? <button ref={triggerRef} className={styles.primary} disabled={disabled} onClick={() => setConfirming(true)}>Reveal cards</button> : <>
+      <p ref={warningRef} tabIndex={-1} className={styles.confirmationWarning}>Reveal all cards? This ends writing for everyone. Unsent drafts are not included. This cannot be reversed.</p>
       <div className={styles.cardActions}>
         <button className={styles.primary} disabled={pending || disabled} onClick={() => void reveal()}>{pending ? 'Revealing…' : 'Confirm reveal'}</button>
         <button className={styles.secondary} disabled={pending} onClick={() => { setConfirming(false); setError('') }}>Keep writing</button>

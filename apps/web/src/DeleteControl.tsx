@@ -1,3 +1,4 @@
+import { useConfirmationFocus } from './useConfirmationFocus'
 import { useEffect, useRef, useState } from 'react'
 import type { RoomSession } from './session'
 import styles from './App.module.css'
@@ -6,6 +7,7 @@ export function DeleteControl({ session, disabled, onDeleted, onRefresh }: {
   session: RoomSession; disabled: boolean; onDeleted: () => void; onRefresh: () => void
 }) {
   const [confirming, setConfirming] = useState(false)
+  const { triggerRef, warningRef } = useConfirmationFocus(confirming)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
   const busy = useRef(false), mounted = useRef(true)
@@ -34,8 +36,8 @@ export function DeleteControl({ session, disabled, onDeleted, onRefresh }: {
     }
   }
   return <div className={styles.deleteControl}>
-    {!confirming ? <button className={styles.secondary} disabled={disabled || pending} onClick={() => setConfirming(true)}>Delete room</button> : <>
-      <p>Permanently delete this room for everyone? All stored cards, votes, moods, groups, timer and participant sessions will be removed. This cannot be undone.</p>
+    {!confirming ? <button ref={triggerRef} className={styles.secondary} disabled={disabled || pending} onClick={() => setConfirming(true)}>Delete room</button> : <>
+      <p ref={warningRef} tabIndex={-1} className={styles.confirmationWarning}>Permanently delete this room for everyone? All stored cards, votes, moods, groups, timer and participant sessions will be removed. This cannot be undone.</p>
       <div className={styles.cardActions}>
         <button className={styles.secondary} disabled={disabled || pending} onClick={() => void remove()}>{pending ? 'Deleting…' : 'Permanently delete room'}</button>
         <button className={styles.secondary} disabled={pending} onClick={() => setConfirming(false)}>Keep room</button>

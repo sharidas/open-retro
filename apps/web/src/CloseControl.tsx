@@ -1,3 +1,4 @@
+import { useConfirmationFocus } from './useConfirmationFocus'
 import { useEffect, useRef, useState } from 'react'
 import type { RoomSession } from './session'
 import { isRoom, type Room } from './useRoom'
@@ -7,6 +8,7 @@ export function CloseControl({ session, disabled, onClosed, onRefresh }: {
   session: RoomSession; disabled: boolean; onClosed: (room: Room) => void; onRefresh: () => void
 }) {
   const [confirming, setConfirming] = useState(false)
+  const { triggerRef, warningRef } = useConfirmationFocus(confirming)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
   const busy = useRef(false)
@@ -44,8 +46,8 @@ export function CloseControl({ session, disabled, onClosed, onRefresh }: {
   return <section className={styles.facilitatorBar} aria-label="Facilitator controls">
     <h2>Finished discussing?</h2>
     <p>Close the retrospective when everyone has finished voting and discussing.</p>
-    {!confirming ? <button className={styles.primary} disabled={disabled} onClick={() => setConfirming(true)}>Close room</button> : <>
-      <p>Close this room? Voting will stop for everyone. Cards and final totals stay readable until expiry or deletion. This cannot be reversed.</p>
+    {!confirming ? <button ref={triggerRef} className={styles.primary} disabled={disabled} onClick={() => setConfirming(true)}>Close room</button> : <>
+      <p ref={warningRef} tabIndex={-1} className={styles.confirmationWarning}>Close this room? Voting will stop for everyone. Cards and final totals stay readable until expiry or deletion. This cannot be reversed.</p>
       <div className={styles.cardActions}>
         <button className={styles.primary} disabled={pending || disabled} onClick={() => void close()}>{pending ? 'Closing…' : 'Confirm close'}</button>
         <button className={styles.secondary} disabled={pending} onClick={() => { setConfirming(false); setError('') }}>Keep discussing</button>
