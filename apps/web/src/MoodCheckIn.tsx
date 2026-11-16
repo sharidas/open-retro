@@ -1,3 +1,4 @@
+import { useConfirmationFocus } from './useConfirmationFocus'
 import { useEffect, useRef, useState } from 'react'
 import type { RoomSession } from './session'
 import { isRoom, type Room } from './useRoom'
@@ -32,6 +33,7 @@ export function MoodCheckIn({ session, checkIn, available, onRoom, onRefresh }: 
   const [ready, setReady] = useState(false)
   const [pending, setPending] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const { triggerRef, warningRef } = useConfirmationFocus(confirming)
   const [attempt, setAttempt] = useState(0)
   const busy = useRef(false)
   const version = useRef(0)
@@ -118,8 +120,8 @@ export function MoodCheckIn({ session, checkIn, available, onRoom, onRefresh }: 
     </li>)}</ul>}
     {session.role === 'facilitator' && checkIn === 'open' && <>
       <p className={styles.hint}>Give everyone a moment. Use the participant link separately to share your own mood.</p>
-      {!confirming ? <button className={styles.primary} disabled={disabled} onClick={() => setConfirming(true)}>Start writing</button> : <div className={styles.cardActions}>
-        <p>Start writing and reveal mood totals? Answers will be frozen. People may skip the check-in.</p>
+      {!confirming ? <button ref={triggerRef} className={styles.primary} disabled={disabled} onClick={() => setConfirming(true)}>Start writing</button> : <div className={styles.cardActions}>
+        <p ref={warningRef} tabIndex={-1} className={styles.confirmationWarning}>Start writing and reveal mood totals? Answers will be frozen. People may skip the check-in.</p>
         <button className={styles.primary} disabled={disabled} onClick={() => void change(null, true)}>Confirm start writing</button>
         <button className={styles.secondary} disabled={pending} onClick={() => setConfirming(false)}>Keep checking in</button>
       </div>}

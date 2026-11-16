@@ -175,3 +175,5 @@
   .columnActions { flex-wrap: wrap; }
   .page { padding-inline: 16px; }
 }
+
+.confirmationWarning:focus { outline: 3px solid #976513; outline-offset: 4px; border-radius: 2px; }

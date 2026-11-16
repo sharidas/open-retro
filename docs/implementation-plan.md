@@ -310,6 +310,12 @@ Demo: run a complete short retro from creation through discussion and closure.
   Focused workflow test and project checks passed. This is API integration
   coverage, not browser end-to-end coverage. Keep task 17 open until the browser,
   keyboard, OS/device, and log checks in `docs/release-verification.md` pass.
+  Second chunk complete: fixed focus loss when inline confirmations replace
+  their trigger. Warning text receives focus; cancellation restores the original
+  button, including card edits/deletion. Browser Enter/Tab checks verified
+  check-in and room-deletion cancellation. All 99 frontend tests, project checks,
+  and production build passed. Full keyboard/screen-reader and browser workflow
+  coverage remains open.
 - [ ] **18 — Package local self-hosting.** Add a Docker Compose setup, persistent
   storage configuration, cleanup scheduling, and setup/operation instructions.
   Done when a fresh installation runs a full retro and survives a restart.

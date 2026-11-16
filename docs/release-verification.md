@@ -19,6 +19,22 @@ certify every OS, browser, or physical device.
 Run `docker compose exec -T dev npm test -w @open-retro/api -- tests/workflow.test.ts`.
 The fixture uses temporary files and leaves the development database untouched.
 
+## Keyboard confirmation checkpoint — 2026-11-16
+
+- [x] Reproduced focus loss when Start writing replaced its focused trigger.
+- [x] Focus inline warning text when opening confirmations, with a visible outline.
+- [x] Restore focus on cancellation for check-in, reveal, closure, room deletion,
+      and card deletion. Restore Edit card focus after cancelling an edit.
+- [x] Preserve the user's focus during ordinary rerenders; do not auto-focus a
+      destructive button. Automated checks run under React StrictMode.
+- [x] Browser checks used Enter/Tab to open and cancel Start writing and Delete
+      room, confirming focus restoration and visible focus outlines. No room
+      deletion or lifecycle transition was performed in those checks.
+
+All 99 frontend tests, TypeScript/portability checks, and production build passed.
+Other confirmation paths have component coverage; screen-reader announcements,
+full keyboard traversal, and physical-device behavior remain to be verified.
+
 ## Remaining browser checkpoint
 
 - [ ] Run creation through closure with facilitator and two isolated browser sessions.
