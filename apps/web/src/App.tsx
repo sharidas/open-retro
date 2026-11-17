@@ -1,5 +1,5 @@
 import { templates, palette, colorNames, columnStyle, type ColumnColor } from './templates'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 import styles from './App.module.css'
 import { CopyLink } from './CopyLink'
 import { RoomPage } from './RoomPage'
@@ -19,12 +19,20 @@ export function App() {
     setSelectedTemplate(id); setInvalid([]); setError('')
   }
   const nextId = useRef(4)
+  const focusAfterChange = useRef<string | null>(null)
   const submitting = useRef(false)
   const [pending, setPending] = useState(false)
   const [invalid, setInvalid] = useState<number[]>([])
   const [error, setError] = useState('')
   const [created, setCreated] = useState<CreatedRoom | null>(null)
   const resultHeading = useRef<HTMLHeadingElement>(null)
+
+  useLayoutEffect(() => {
+    if (focusAfterChange.current) {
+      document.getElementById(focusAfterChange.current)?.focus()
+      focusAfterChange.current = null
+    }
+  }, [columns, created])
 
   useEffect(() => { if (created) resultHeading.current?.focus() }, [created])
 
@@ -95,9 +103,9 @@ export function App() {
       <p className={styles.hint}>Links are kept only on this page. Save them before refreshing. Room expiry: {new Date(created.expiresAt).toLocaleString()} (your local time).</p>
       <p className={styles.notice}>Open the participant room to join. If check-in is enabled, your facilitator starts writing after the mood check. Then write private cards, reveal, vote, and discuss.</p>
       <p><a href={created.participantLink}>Open participant room</a> · <a href={created.facilitatorLink}>Open facilitator room</a></p>
-      <button type="button" className={styles.secondary} onClick={() => { setCreated(null); setError('') }}>Create another room</button>
+      <button type="button" className={styles.secondary} onClick={() => { focusAfterChange.current = 'create-heading'; setCreated(null); setError('') }}>Create another room</button>
     </section> : <section className={styles.panel} aria-labelledby="create-heading">
-      <div className={styles.sectionHeader}><h2 id="create-heading">Make space for your sprint</h2><span className={styles.badge}>No accounts needed</span></div>
+      <div className={styles.sectionHeader}><h2 id="create-heading" tabIndex={-1}>Make space for your sprint</h2><span className={styles.badge}>No accounts needed</span></div>
       <p>Start with a familiar format, then make it your team’s own.</p>
       <form onSubmit={(event) => void submit(event)} noValidate>
         <fieldset disabled={pending} className={styles.fieldset}>
@@ -141,6 +149,7 @@ export function App() {
             <button type="button" className={styles.remove} disabled={columns.length === 1}
               aria-label={`Remove column ${index + 1}`} onClick={() => {
                 setSelectedTemplate('edited')
+                focusAfterChange.current = `column-${(columns[index + 1] ?? columns[index - 1]).id}`
                 setColumns((current) => current.filter((item) => item.id !== column.id))
                 setInvalid((current) => current.filter((id) => id !== column.id))
                 setError('')
@@ -151,7 +160,7 @@ export function App() {
               const id = nextId.current++
               setSelectedTemplate('edited')
               setColumns((current) => [...current, { id, name: '', color: colorNames[current.length] }])
-              window.requestAnimationFrame(() => document.getElementById(`column-${id}`)?.focus())
+              focusAfterChange.current = `column-${id}`
             }}>Add column</button>
             <span className={styles.hint} role="status">{columns.length} of 5 columns</span>
           </div>
