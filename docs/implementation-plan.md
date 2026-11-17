@@ -331,10 +331,18 @@ Demo: run a complete short retro from creation through discussion and closure.
   All 233 API tests and project checks passed for the logging checkpoint.
   Browser console, proxy failure/production logging, full keyboard traversal,
   and native OS/device checks remain tracked in the release checklist.
-- [ ] **18 — Package local self-hosting.** Add a Docker Compose setup, persistent
+- [x] **18 — Package local self-hosting.** Add a Docker Compose setup, persistent
   storage configuration, cleanup scheduling, and setup/operation instructions.
   Done when a fresh installation runs a full retro and survives a restart.
   Learn: containers, configuration, and deployment.
+  Completed with a multi-stage production image, non-root Node runtime, built
+  frontend/API serving, separate persistent SQLite volume, health check, bounded
+  Docker logs, and local-only configurable port. Fresh-volume HTTP verification
+  passed creation, two independent participants, private writing, reveal, votes,
+  closure, and persistence after restart. Direct room routes and compiled assets
+  also passed. All 244 API tests and TypeScript/portability checks passed.
+  Native OS/device and remaining browser release checks stay open under task 17;
+  public HTTPS hosting is outside this local package.
 
 Demo: start a fresh installation and run a retrospective with several people.
 
