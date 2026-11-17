@@ -151,6 +151,20 @@ exercise a development proxy failure. Production reverse-proxy logging must be
 reviewed when task 18 introduces that deployment configuration. Do not log request
 bodies, Authorization headers, or private links; operators control log retention.
 
+## Group rename keyboard focus checkpoint — 2026-11-17
+
+- [x] Opening Rename group focuses its name input.
+- [x] Cancelling returns focus to the correct group's Rename group button.
+- [x] Successful saves restore focus after reconciliation enables the trigger.
+- [x] Failed saves retain the editor; ordinary rerenders do not steal focus.
+- [x] An older save cannot close another group's editor, and deferred restoration
+      does not steal focus after the user moves elsewhere.
+
+Verified with StrictMode component tests. The frontend suite passed 109 tests
+before the final safeguard; all five focused rename tests passed afterward.
+TypeScript/portability checks and production build passed. Full browser keyboard
+traversal and screen-reader verification remain open.
+
 ## Remaining browser checkpoint
 
 - [ ] Run creation through closure with facilitator and two isolated browser sessions.
