@@ -165,6 +165,34 @@ before the final safeguard; all five focused rename tests passed afterward.
 TypeScript/portability checks and production build passed. Full browser keyboard
 traversal and screen-reader verification remain open.
 
+## Production package checkpoint — 2026-11-17
+
+- [x] Built the multi-stage image and started it with a fresh isolated volume.
+- [x] HTTP workflow: create, two independent joins, private cards, reveal, votes,
+      and closure. No development room data was used.
+- [x] Restarted the container; room state, credentials, cards and votes persisted.
+- [x] Docker health reported healthy; runtime UID was non-root, and Vite and
+      TypeScript were absent from the runtime node_modules directory.
+- [x] Compiled frontend, direct participant/facilitator routes and linked assets
+      were reachable. HTML/API responses are uncached; built assets are immutable.
+- [x] All 244 API tests and TypeScript/portability checks passed, including eleven
+      production routing/file-boundary tests. The image build compiled both apps.
+- [x] Fresh production logs contained only the two startup messages after restart.
+
+The original default port 8080 was occupied locally; verification used OPEN_RETRO_PORT=18080
+and Compose project open-retro-release-check. The default is now 18080 to avoid
+the existing Nextcloud service on 8080. The test service was stopped after
+verification; its isolated volume was retained. The built application uses one
+Node server, so there is no production reverse proxy in this package to inspect.
+Any future external proxy requires its own privacy/TLS checks.
+
+The image build's npm audit reported five high-severity development dependency
+advisories. After pruning development packages, npm reported zero vulnerabilities
+in that runtime dependency set. Development dependency remediation remains a
+separate follow-up; this does not certify the base image or future advisory state.
+The full production workflow here used HTTP, not browser automation. Task 17's
+browser, screen-reader and physical-device checks remain open.
+
 ## Remaining browser checkpoint
 
 - [ ] Run creation through closure with facilitator and two isolated browser sessions.

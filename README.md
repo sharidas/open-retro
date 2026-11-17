@@ -49,6 +49,18 @@ the API and bundles the frontend.
 Neither installs anything on your machine. Container dependencies and build
 outputs stay inside the container.
 
+## Run the Built Application
+
+For local operation without development tools or source mounts:
+
+```bash
+docker compose -f compose.production.yaml up --build -d
+```
+
+Open [the built app](http://localhost:18080). This uses a separate persistent SQLite
+volume and binds only to localhost. See [self-hosting operations](docs/self-hosting.md)
+for health checks, updates, backups, logging, and network limitations.
+
 ## How the Foundation Works
 
 - `apps/web`: React and TypeScript UI, served by Vite on port 5173.
