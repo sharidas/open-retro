@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import type { Card } from './card'
 import type { RoomSession } from './session'
 import { useGroups } from './useGroups'
@@ -15,6 +15,24 @@ export function GroupingBoard({ session, cards, columns, phase, available, onRoo
   const [target, setTarget] = useState('')
   const [renaming, setRenaming] = useState<string | null>(null)
   const [rename, setRename] = useState('')
+  const renameInput = useRef<HTMLInputElement>(null)
+  const renameTrigger = useRef<HTMLButtonElement | null>(null)
+  const previousRename = useRef<string | null>(null)
+  const restoreRenameFocus = useRef(false)
+  useLayoutEffect(() => {
+    if (renaming !== previousRename.current) {
+      if (renaming) {
+        renameInput.current?.focus()
+        restoreRenameFocus.current = false
+      } else restoreRenameFocus.current = true
+      previousRename.current = renaming
+    }
+    // Saving temporarily disables the trigger until fresh groups arrive.
+    if (restoreRenameFocus.current && !grouping.disabled) {
+      if (document.activeElement === document.body) renameTrigger.current?.focus()
+      restoreRenameFocus.current = false
+    }
+  }, [renaming, grouping.disabled])
   const groups = grouping.snapshot?.groups ?? []
   const members = new Set(groups.flatMap(group => group.cardIds))
   async function move(destination: string | null, create = false) {
@@ -52,11 +70,11 @@ export function GroupingBoard({ session, cards, columns, phase, available, onRoo
         <h3>{group.name}</h3>
         <p className={styles.hint}>{group.cardIds.length} {group.cardIds.length === 1 ? 'card' : 'cards'} · {totals ? `${group.cardIds.reduce((sum, id) => sum + (totals.get(id) ?? 0), 0)} total votes (sum of card votes)` : 'Vote totals unavailable'}</p>
         {phase === 'revealed' && <div className={styles.cardActions}>
-          <button className={styles.secondary} disabled={grouping.disabled} onClick={() => { setRenaming(group.id); setRename(group.name) }}>Rename group</button>
+          <button className={styles.secondary} disabled={grouping.disabled} onClick={event => { renameTrigger.current = event.currentTarget; setRenaming(group.id); setRename(group.name) }}>Rename group</button>
           <button className={styles.secondary} disabled={grouping.disabled} onClick={() => void grouping.save(groups.filter(item => item.id !== group.id))}>Ungroup all cards</button>
         </div>}
-        {renaming === group.id && phase === 'revealed' && <form className={styles.renameGroup} onSubmit={event => { event.preventDefault(); if (rename.trim()) void grouping.save(groups.map(item => item.id === group.id ? { ...item, name: rename.trim() } : item)).then(saved => { if (saved) setRenaming(null) }) }}>
-          <label>Group name<input value={rename} maxLength={80} disabled={grouping.disabled} onChange={event => setRename(event.target.value)} /></label>
+        {renaming === group.id && phase === 'revealed' && <form className={styles.renameGroup} onSubmit={event => { event.preventDefault(); if (rename.trim()) void grouping.save(groups.map(item => item.id === group.id ? { ...item, name: rename.trim() } : item)).then(saved => { if (saved) setRenaming(current => current === group.id ? null : current) }) }}>
+          <label>Group name<input ref={renameInput} value={rename} maxLength={80} disabled={grouping.disabled} onChange={event => setRename(event.target.value)} /></label>
           <button className={styles.secondary} disabled={grouping.disabled || !rename.trim()}>Save name</button>
           <button type="button" className={styles.secondary} onClick={() => setRenaming(null)}>Cancel rename</button>
         </form>}
