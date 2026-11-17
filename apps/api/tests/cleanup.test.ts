@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { startCleanup, CLEANUP_INTERVAL_MS } from '../src/cleanup.js'
-afterEach(() => vi.useRealTimers())
+afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
 it('runs at startup and retries failures without logging database details', async () => {
   vi.useFakeTimers()
   const clean = vi.fn().mockRejectedValueOnce(new Error('sensitive database detail')).mockResolvedValue(1), report = vi.fn()
@@ -23,4 +23,14 @@ it('never overlaps runs and waits for active cleanup before shutdown', async () 
   resolve(0); await ending
   await vi.advanceTimersByTimeAsync(CLEANUP_INTERVAL_MS)
   expect(clean).toHaveBeenCalledOnce()
+})
+
+it('reports only the fixed warning when the real cleanup reporter handles a private error', async () => {
+  vi.useFakeTimers()
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const stop = startCleanup(async () => { throw new Error('private card text and database credentials') })
+  try {
+    await vi.advanceTimersByTimeAsync(0)
+    expect(log.mock.calls).toEqual([['Room cleanup failed; will retry.']])
+  } finally { await stop() }
 })

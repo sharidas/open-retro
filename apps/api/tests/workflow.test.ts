@@ -1,4 +1,5 @@
-import { expect, it } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
+
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -8,12 +9,16 @@ import { hashSecret } from '../src/domain/facilitator.js'
 import { openDatabase } from '../src/storage/database.js'
 import { roomRepository } from '../src/storage/rooms.js'
 
+afterEach(() => vi.restoreAllMocks())
+
 it('runs a two-participant retro from creation through restart, closure, and deletion', async () => {
   const folder = await mkdtemp(join(tmpdir(), 'retro-workflow-'))
   const path = join(folder, 'retro.sqlite')
   let connection = await openDatabase(path)
   let app = createApp(roomRepository(connection.db))
   const alice = randomBytes(32).toString('base64url'), bob = randomBytes(32).toString('base64url')
+  const logs = (['log', 'info', 'warn', 'error', 'debug'] as const).map(method =>
+    vi.spyOn(console, method).mockImplementation(() => {}))
   try {
     const created = await app.request('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ columns: ['Went well', 'Improve', 'Next'], columnColors: ['sage', 'peach', 'blue'], moodCheckIn: true }) })
@@ -99,6 +104,8 @@ it('runs a two-participant retro from creation through restart, closure, and del
     for (const table of ['rooms', 'participants', 'cards', 'votes', 'moods', 'room_grouping', 'writing_timers']) {
       expect((await connection.db.$client.execute(`SELECT COUNT(*) AS n FROM ${table}`)).rows[0].n).toBe(0)
     }
+    // No request logging: even anonymous text and hashed credentials are private.
+    for (const log of logs) expect(log).not.toHaveBeenCalled()
   } finally {
     connection.close()
     await rm(folder, { recursive: true, force: true })
