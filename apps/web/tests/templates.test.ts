@@ -58,3 +58,23 @@ it.each([422, 429])('preserves room settings and does not replay creation after 
   expect(document.querySelector('[role="alert"]')).not.toBeNull()
   expect(fetchMock).toHaveBeenCalledOnce()
 })
+
+it.each([1, 3])('moves focus to a neighbouring input when removing column %i', async index => {
+  const remove = document.querySelector<HTMLButtonElement>(`[aria-label="Remove column ${index}"]`)!
+  const expectedId = 'column-2'
+  remove.focus()
+  await act(async () => remove.click())
+  expect(document.activeElement).toBe(document.getElementById(expectedId))
+})
+it('focuses added columns without a delayed animation callback', async () => {
+  await click('Add column')
+  expect(document.activeElement).toBe(document.querySelector('input[id="column-4"]'))
+})
+it('focuses the creation heading when starting another room', async () => {
+  await click('Create retrospective')
+  const button = [...document.querySelectorAll('button')].find(item => item.textContent === 'Create another room')!
+  button.focus()
+  await act(async () => button.click())
+  expect(document.activeElement).toBe(document.getElementById('create-heading'))
+  expect(fetchMock).toHaveBeenCalledOnce()
+})

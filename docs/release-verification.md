@@ -202,6 +202,18 @@ No packages were downgraded, patched locally, or suppressed. Remediation remains
 open; see [dependency-security.md](dependency-security.md) for evidence, scope,
 and the commands and criteria for closing it when a fix is available.
 
+## Room setup focus checkpoint — 2026-11-17
+
+- [x] Removing a column focuses the next column name, or the previous one when
+      removing the last column, instead of losing focus with the removed button.
+- [x] Adding a column focuses its input immediately after React commits the update,
+      without a delayed animation callback that could steal focus later.
+- [x] Create another room focuses the creation heading without submitting again.
+
+All 114 frontend tests, TypeScript/portability checks and production build passed.
+These are component-level focus checks; full browser keyboard and screen-reader
+verification remain open.
+
 ## Remaining browser checkpoint
 
 - [ ] Run creation through closure with facilitator and two isolated browser sessions.
