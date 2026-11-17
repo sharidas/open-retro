@@ -193,6 +193,15 @@ separate follow-up; this does not certify the base image or future advisory stat
 The full production workflow here used HTTP, not browser automation. Task 17's
 browser, screen-reader and physical-device checks remain open.
 
+## Dependency advisory follow-up — 2026-11-17
+
+Investigation confirmed that all five high-severity entries originate from
+picomatch, with no published patched version available. The latest release and
+locked version are both 4.0.7. The runtime-only audit reports zero findings.
+No packages were downgraded, patched locally, or suppressed. Remediation remains
+open; see [dependency-security.md](dependency-security.md) for evidence, scope,
+and the commands and criteria for closing it when a fix is available.
+
 ## Remaining browser checkpoint
 
 - [ ] Run creation through closure with facilitator and two isolated browser sessions.
