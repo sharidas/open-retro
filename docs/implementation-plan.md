@@ -324,6 +324,13 @@ Demo: run a complete short retro from creation through discussion and closure.
   outcomes and a repeatable scenario in `docs/release-verification.md`. No code
   changes were necessary. Full browser closure, log inspection, network recovery,
   and native OS/device checks remain open.
+  Further chunks complete: connection-loss recovery now requires a successful
+  card refresh after uncertain creation; automated and browser timeout checks
+  preserve drafts/edits without replay. Application log privacy assertions cover
+  the full API workflow, database failures, and the default cleanup warning.
+  All 233 API tests and project checks passed for the logging checkpoint.
+  Browser console, proxy failure/production logging, full keyboard traversal,
+  and native OS/device checks remain tracked in the release checklist.
 - [ ] **18 — Package local self-hosting.** Add a Docker Compose setup, persistent
   storage configuration, cleanup scheduling, and setup/operation instructions.
   Done when a fresh installation runs a full retro and survives a restart.

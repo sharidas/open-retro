@@ -89,10 +89,13 @@ describe('room creation API', () => {
 
   it('does not disclose database errors or secrets on failure', async () => {
     const f = await fixture()
+    const logs = (['log', 'info', 'warn', 'error', 'debug'] as const).map(method =>
+      vi.spyOn(console, method).mockImplementation(() => {}))
     vi.spyOn(f.repo, 'create').mockRejectedValue(new Error('sensitive database detail'))
     const response = await f.create()
     expect(response.status).toBe(500)
     expect(await response.json()).toEqual({ error: 'INTERNAL_ERROR' })
+    for (const log of logs) expect(log).not.toHaveBeenCalled()
   })
 })
 

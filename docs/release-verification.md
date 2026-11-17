@@ -131,6 +131,26 @@ combinations. HTTP rejection paths and failed refreshes have automated coverage.
    editor text survives. Check room status, then cancel and refresh to inspect the
    saved result. Copy any text you need before cancelling an edit.
 
+## Application log privacy checkpoint — 2026-11-17
+
+- [x] Full two-participant API workflow asserts no calls to console log/info/warn/
+      error/debug, covering successful requests and rejected operations.
+- [x] Injected database failure returns only INTERNAL_ERROR and emits no console
+      output. The exception detail is neither returned nor logged.
+- [x] The default cleanup reporter emits only its fixed retry warning, even when
+      the thrown error contains private data.
+- [x] Reviewed application logging sites and the recent local Docker log sample
+      (up to 200 lines), including API and Vite development output. Observed
+      startup, source-update, and process-exit messages; no card text or
+      credentials were observed in that sample.
+
+All 233 API tests and TypeScript/portable-filename checks passed. These assertions
+cover application console output, not every dependency, direct stdout/stderr
+write, browser console, or future infrastructure logger. The sampled logs did not
+exercise a development proxy failure. Production reverse-proxy logging must be
+reviewed when task 18 introduces that deployment configuration. Do not log request
+bodies, Authorization headers, or private links; operators control log retention.
+
 ## Remaining browser checkpoint
 
 - [ ] Run creation through closure with facilitator and two isolated browser sessions.
@@ -141,7 +161,8 @@ combinations. HTTP rejection paths and failed refreshes have automated coverage.
 - [x] Verify server timeout/reconnect preserves drafts without replay (browser);
       rejected requests and mutation counts covered by automated tests.
 - [ ] Verify browser offline mode and physical mobile network switching.
-- [ ] Inspect application, server, and proxy logs for secret exposure.
+- [x] Check application console privacy and inspect recent local server/dev logs.
+- [ ] Inspect browser console, proxy failure logs, and production proxy logging.
 
 ## OS and mobile checkpoint
 
