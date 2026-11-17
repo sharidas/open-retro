@@ -74,6 +74,25 @@ remains below. OS/device coverage is unchanged.
 8. Select Most voted and verify descending totals across columns. Reopen both
    participant links and verify saved selections, budgets, and totals.
 
+## Connection recovery automated checkpoint — 2026-11-17
+
+- [x] Interrupted card creation, HTTP 5xx, invalid success responses, and timeout
+      preserve the draft and block further creates until a successful card refresh.
+- [x] Failed refreshes keep saving paused; editing a draft does not bypass the guard.
+- [x] Successful refresh shows the saved card without replaying the POST or clearing
+      unsent text. Participants compare their draft with saved cards before retrying.
+- [x] Unsaved edits survive a failed PATCH and availability changes without replay.
+- [x] A room revealed during an outage keeps unsent text visible and saving disabled.
+- [x] Existing room-poll and voting tests verify recovery/backoff, reconciliation of
+      lost vote responses, and no automatic replay of vote mutations.
+
+These are simulated fetch failures in component/hook tests, not browser outage
+checks. Drafts remain page-memory only: reload or navigation still discards them.
+The refresh guard reduces accidental duplicates; it is not server-side idempotency
+and cannot prevent a deliberate resubmission after refresh or a late server commit.
+All 105 frontend tests, TypeScript/filename portability checks, and build passed.
+A real browser disconnect/reconnect check remains below.
+
 ## Remaining browser checkpoint
 
 - [ ] Run creation through closure with facilitator and two isolated browser sessions.
