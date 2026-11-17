@@ -20,6 +20,7 @@ export function WritingBoard({ session, columns, columnColors, phase, available 
   const [cardBusy, setCardBusy] = useState(false)
   const [locked, setLocked] = useState(phase !== 'writing')
   const [notice, setNotice] = useState('')
+  const [needsRefresh, setNeedsRefresh] = useState(false)
   const busy = useRef(false)
   const submitController = useRef<AbortController | null>(null)
   const mounted = useRef(true)
@@ -53,7 +54,10 @@ export function WritingBoard({ session, columns, columnColors, phase, available 
         if (!Array.isArray(data?.cards) || !data.cards.every((card: unknown) => isCard(card, columns.length))) {
           throw new Error('Invalid cards response')
         }
-        if (!controller.signal.aborted) setCards(data.cards)
+        if (!controller.signal.aborted) {
+          setCards(data.cards)
+          setNeedsRefresh(false)
+        }
       } catch {
         if (!controller.signal.aborted) setLoadError('Could not connect to load your cards. Your drafts are still here; try refreshing your cards.')
       } finally {
@@ -72,7 +76,7 @@ export function WritingBoard({ session, columns, columnColors, phase, available 
 
   async function submit(event: FormEvent, columnIndex: number) {
     event.preventDefault()
-    if (busy.current || activeCard || loading || locked || loadError || !available || phase !== 'writing') return
+    if (needsRefresh || busy.current || activeCard || loading || locked || loadError || !available || phase !== 'writing') return
     const text = (drafts[columnIndex] ?? '').trim()
     if (!text || text.length > 2000) {
       setErrors((current) => ({ ...current, [columnIndex]: 'Write 1–2000 characters before saving.' }))
@@ -92,6 +96,7 @@ export function WritingBoard({ session, columns, columnColors, phase, available 
         body: JSON.stringify({ columnIndex, text }), signal: controller.signal,
       })
       if (!mounted.current) return
+      if (response.status >= 500) throw new Error('Uncertain save result')
       if (!response.ok) {
         const message = response.status === 429 ? 'Too many requests. Wait a minute before saving again. Your draft is still here.' :
           response.status === 422 ? 'Card limit reached: 50 per participant or 500 per room. Remove an existing card before adding another. Your draft is preserved.' :
@@ -113,9 +118,12 @@ export function WritingBoard({ session, columns, columnColors, phase, available 
       setNotice(`Card saved privately in ${columns[columnIndex]}.`)
       document.getElementById(`draft-${columnIndex}`)?.focus()
     } catch {
-      if (mounted.current) setErrors((current) => ({ ...current,
+      if (mounted.current) {
+        setNeedsRefresh(true)
+        setErrors((current) => ({ ...current,
         [columnIndex]: 'The connection was interrupted or timed out. Your card may have been saved. Refresh your saved cards before submitting again to avoid a duplicate.',
-      }))
+        }))
+      }
     } finally {
       window.clearTimeout(timeout)
       busy.current = false
@@ -134,6 +142,7 @@ export function WritingBoard({ session, columns, columnColors, phase, available 
         if (!busy.current) setAttempt((value) => value + 1)
       }}>Refresh my cards</button>
       <p role="status">{loading ? 'Loading your saved cards…' : notice}</p>
+      {needsRefresh && <p className={styles.notice} role="status">Saving is paused because your last card may already be saved. Refresh my cards, then compare the saved cards with your draft before retrying. Your draft will not be submitted automatically.</p>}
       {loadError && <p className={styles.error} role="alert">{loadError}</p>}
       {(locked || phase !== 'writing' || !available) && <p className={styles.notice}>Writing is unavailable. Your drafts remain below so you can copy them before leaving or reloading.</p>}
     </div>
@@ -165,7 +174,7 @@ export function WritingBoard({ session, columns, columnColors, phase, available 
               setErrors((current) => ({ ...current, [index]: '' })); setNotice('') }} />
           <p id={`draft-hint-${index}`} className={styles.hint}>{(drafts[index] ?? '').length}/2000 characters</p>
           {errors[index] && <p id={`draft-error-${index}`} className={styles.error} role="alert">{errors[index]}</p>}
-          <button type="submit" className={styles.primary} disabled={pending !== null || activeCard !== null || loading || locked || !!loadError || !available || phase !== 'writing'}>
+          <button type="submit" className={styles.primary} disabled={needsRefresh || pending !== null || activeCard !== null || loading || locked || !!loadError || !available || phase !== 'writing'}>
             {pending === index ? 'Saving…' : `Save card in column ${index + 1}`}
           </button>
         </form>
