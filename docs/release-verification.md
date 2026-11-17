@@ -91,7 +91,45 @@ checks. Drafts remain page-memory only: reload or navigation still discards them
 The refresh guard reduces accidental duplicates; it is not server-side idempotency
 and cannot prevent a deliberate resubmission after refresh or a late server commit.
 All 105 frontend tests, TypeScript/filename portability checks, and build passed.
-A real browser disconnect/reconnect check remains below.
+The browser server-timeout check below supplements these simulated failures.
+
+## Browser connection recovery checkpoint — 2026-11-17
+
+Verified in the in-app browser against the local Docker application, using a new
+room with synthetic text and mood check-in disabled. Paused/unpaused the dev
+container to simulate an unresponsive server without restarting the page or
+removing database data. The container was restored to running afterward.
+
+| Check | Observed result |
+| --- | --- |
+| Create timeout | Saving timed out after the server was paused. Draft text remained editable; new card saves were disabled. |
+| Room outage | Room and writing-status warnings appeared, and save controls were paused. |
+| Reconnect | Check room status restored availability without a page reload. |
+| Reconciliation | Refresh my cards showed exactly one card from the original timed-out request; the draft remained intact. No second save was submitted. |
+| Edit timeout | A changed card retained its full editor text after timeout; Save changes was disabled during the outage. |
+| Edit reconnect | Checking room status restored availability while preserving the editor text. |
+| Saved edit | Cancel edit followed by Refresh my cards showed the revision committed by the original PATCH. No second PATCH was submitted through the UI. |
+
+No new application defect was found. A timed-out request can still commit on the
+server: compare saved cards before retrying, as the UI advises. This check observes
+the UI and resulting cards; automated tests separately assert request counts.
+
+This covers server unresponsiveness and manual recovery. It does not certify
+physical mobile network switching, browser offline mode, or all OS/browser
+combinations. HTTP rejection paths and failed refreshes have automated coverage.
+
+### Repeating the recovery check
+
+1. Create a test room, join as a participant, and type a draft without saving.
+2. Run `docker compose pause dev`, then immediately save the draft.
+3. After the 15-second timeout, verify the draft remains and saving is paused.
+4. Always run `docker compose unpause dev` to restore the server, even if a check
+   fails. Check room status, then Refresh my cards without resubmitting the draft.
+5. Compare the saved cards with the retained draft; the original request may have
+   committed despite its timeout.
+6. Edit a saved card and repeat the pause/save/timeout/unpause sequence. Verify
+   editor text survives. Check room status, then cancel and refresh to inspect the
+   saved result. Copy any text you need before cancelling an edit.
 
 ## Remaining browser checkpoint
 
@@ -100,7 +138,9 @@ A real browser disconnect/reconnect check remains below.
 - [x] Verify timer pause/resume/extend and readiness changes across sessions.
 - [ ] Navigate forms, dialogs, cards, and groups using only the keyboard.
 - [ ] Verify focus visibility, understandable labels, and error announcements.
-- [ ] Verify offline/reconnect and rejected requests preserve drafts without replay.
+- [x] Verify server timeout/reconnect preserves drafts without replay (browser);
+      rejected requests and mutation counts covered by automated tests.
+- [ ] Verify browser offline mode and physical mobile network switching.
 - [ ] Inspect application, server, and proxy logs for secret exposure.
 
 ## OS and mobile checkpoint
