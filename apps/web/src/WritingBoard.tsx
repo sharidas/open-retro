@@ -1,5 +1,5 @@
 import { columnStyle } from './templates'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 import type { RoomSession } from './session'
 import styles from './App.module.css'
 import { isCard, type Card } from './card'
@@ -21,6 +21,13 @@ export function WritingBoard({ session, columns, columnColors, phase, available 
   const [locked, setLocked] = useState(phase !== 'writing')
   const [notice, setNotice] = useState('')
   const [needsRefresh, setNeedsRefresh] = useState(false)
+  const focusDraft = useRef<number | null>(null)
+  useLayoutEffect(() => {
+    if (pending === null && focusDraft.current !== null) {
+      document.getElementById(`draft-${focusDraft.current}`)?.focus()
+      focusDraft.current = null
+    }
+  }, [pending])
   const busy = useRef(false)
   const submitController = useRef<AbortController | null>(null)
   const mounted = useRef(true)
@@ -116,7 +123,7 @@ export function WritingBoard({ session, columns, columnColors, phase, available 
       setCards((current) => [...current.filter((card) => card.id !== saved.id), saved].sort((a, b) => a.id.localeCompare(b.id)))
       setDrafts((current) => ({ ...current, [columnIndex]: '' }))
       setNotice(`Card saved privately in ${columns[columnIndex]}.`)
-      document.getElementById(`draft-${columnIndex}`)?.focus()
+      focusDraft.current = columnIndex
     } catch {
       if (mounted.current) {
         setNeedsRefresh(true)

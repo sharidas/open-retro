@@ -214,12 +214,45 @@ All 114 frontend tests, TypeScript/portability checks and production build passe
 These are component-level focus checks; full browser keyboard and screen-reader
 verification remain open.
 
+## Keyboard workflow browser checkpoint — 2026-11-17–18
+
+Used the in-app browser and local Docker development app. Application controls
+were operated with Tab/Shift+Tab, Enter/Space, arrow keys and text entry. Tabs and
+room links were opened through browser tooling; participant origins were
+127.0.0.1 and localhost. Creation was checked on November 17; after interruption,
+the same unexpired room was reopened on November 18 and completed through closure.
+This was not an uninterrupted single browser run.
+
+| Path | Observed result |
+| --- | --- |
+| Creation | Start from scratch, blank validation, typing, colour selection, add/remove column and creation worked by keyboard. Blank validation and column changes placed focus correctly. |
+| Mood | Participant selected Good using Space; facilitator opened and confirmed Start writing using Tab/Enter. |
+| Private writing | Two isolated participants saved distinct cards; each private board showed only its own cards. |
+| Card edit | Edit focused the editor; saving changed the card and returned focus to Edit card. |
+| Card creation defect | After saving, focus fell to the page because the draft was still disabled when focus was requested. Fixed by focusing after React re-enables the field; a new browser save confirmed the draft receives focus. |
+| Reveal | Confirmation focused warning text; cancellation restored Reveal cards; confirmation revealed all three test cards. |
+| Voting | Space added a vote and reduced the personal budget to 2 of 3; the other participant retained 3 of 3 with no selected vote. |
+| Grouping | Selected two related cards, created Focus, renamed it Protect focus, and verified rename returned focus to the trigger. |
+| Closure | Opened/cancelled the confirmation with correct focus restoration, then confirmed closure by keyboard. |
+| Closed reads | Both participant pages showed all three cards and disabled voting after reload. Groups retained the renamed group with two cards and exposed no grouping mutation controls. |
+| Focus visibility | Screenshot inspection showed a visible outline around the keyboard-focused Groups control. |
+
+All 115 frontend tests, TypeScript/portable-filename checks and production build
+passed. The new regression test waits for an asynchronous card response before
+checking focus on the enabled draft. Other asynchronous actions can temporarily
+leave focus on the page while controls are disabled; keyboard traversal remained
+possible in this walkthrough. This is core-path coverage, not exhaustive testing
+of every control or a screen-reader accessibility certification. No cards or rooms
+were deleted. Browser console and physical-device verification remain open.
+
 ## Remaining browser checkpoint
 
-- [ ] Run creation through closure with facilitator and two isolated browser sessions.
+- [x] Complete creation through closure with facilitator and two isolated browser sessions
+      (resumed across two days; see keyboard checkpoint).
 - [x] Verify vote budget, undo, peer totals, most-voted ordering, and reload (task 13).
 - [x] Verify timer pause/resume/extend and readiness changes across sessions.
-- [ ] Navigate forms, dialogs, cards, and groups using only the keyboard.
+- [x] Navigate the core creation, writing, grouping, voting and closure paths by keyboard.
+- [ ] Check remaining controls and screen-reader announcements exhaustively.
 - [ ] Verify focus visibility, understandable labels, and error announcements.
 - [x] Verify server timeout/reconnect preserves drafts without replay (browser);
       rejected requests and mutation counts covered by automated tests.
