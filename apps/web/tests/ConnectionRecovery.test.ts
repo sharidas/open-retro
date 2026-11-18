@@ -91,3 +91,17 @@ it('retains a timed-out draft and does not retry it when the connection returns'
   expect(button('Save card in column 1').disabled).toBe(false)
   expect(fetchMock.mock.calls.filter(call => call[1]?.method === 'POST')).toHaveLength(1)
 })
+
+it('returns focus to the enabled draft after an asynchronous successful save', async () => {
+  await render(); await type('#draft-0', card.text)
+  let finish!: (response: Response) => void
+  fetchMock.mockImplementationOnce(() => new Promise<Response>(resolve => { finish = resolve }))
+  button('Save card in column 1').focus()
+  await submit()
+  expect((document.querySelector('#draft-0') as HTMLTextAreaElement).disabled).toBe(true)
+  await act(async () => finish(json({ card })))
+  const draft = document.querySelector('#draft-0') as HTMLTextAreaElement
+  expect(draft.disabled).toBe(false)
+  expect(draft.value).toBe('')
+  expect(document.activeElement).toBe(draft)
+})
