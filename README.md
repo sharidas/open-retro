@@ -11,6 +11,12 @@ Facilitators can reveal cards and open room views update automatically. Particip
 and switch to a most-voted discussion view. Facilitators can close the room to
 freeze voting while keeping the final board readable.
 
+## Release status
+
+The local MVP is available as a production Docker release candidate. See the
+[release status and remaining platform checks](docs/release-status.md) for verified
+behavior, known limits, and the checks required before broad compatibility claims.
+
 ## Run Locally With Docker
 
 Prerequisites: Docker Engine or Docker Desktop with Docker Compose, and Git.

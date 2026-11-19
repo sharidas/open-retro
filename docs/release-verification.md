@@ -245,6 +245,40 @@ possible in this walkthrough. This is core-path coverage, not exhaustive testing
 of every control or a screen-reader accessibility certification. No cards or rooms
 were deleted. Browser console and physical-device verification remain open.
 
+## Local release candidate checkpoint — 2026-11-19
+
+Verified the compiled production app in the in-app browser on an isolated Compose
+project at port 18081. The previous usage-limit block was resolved before testing.
+
+- [x] At a 320px viewport, created a three-column retro, wrote two cards, revealed,
+      voted, and grouped the cards across columns. Mood check-in was disabled for
+      this scenario; prior mood/keyboard coverage remains recorded above.
+- [x] Found and fixed horizontal overflow in the grouping fieldset. With a long
+      group name, document scroll width reached 331px against 305px available
+      width (320px viewport minus scrollbar). Added min-width: 0 to the fieldset
+      and max-width: 100% to group/rename labels. Rebuilt the production image;
+      grouping and rename then measured 305px scroll/available width.
+- [x] Inspected the narrow layout visually. The facilitator close confirmation
+      measured 360px scroll/available width at a 375px viewport. Closed the room
+      and verified the participant's read-only cards and preserved vote after reload.
+- [x] Participant and facilitator production browser console snapshots were empty
+      (up to 100 entries requested per tab). Production container logs showed
+      startup messages only; no request logger or production proxy is installed.
+- [x] Reviewed installed Vite proxy failure handling: default output included the
+      request URL and error object. Added a fixed-message logger for proxy errors.
+      A real local failed proxy POST verifies that synthetic room/query/header/body
+      values do not appear in logger calls and the response body is empty.
+- [x] Full regression run: 244 API + 117 frontend tests (361 total), TypeScript,
+      portable-filename checks, and production compilation passed. Production
+      Docker image rebuilt successfully with the responsive fix.
+
+These are viewport tests, not touch-device emulation or physical-phone testing.
+Browser automation did not expose a supported offline-mode switch. Existing real
+server-timeout recovery checks remain valid but do not replace network switching.
+No screen reader or native macOS/Windows/iOS/Android surface was available here.
+Remaining checks below are explicit release limitations, not silently passed tests.
+The development dependency advisory remains tracked in dependency-security.md.
+
 ## Remaining browser checkpoint
 
 - [x] Complete creation through closure with facilitator and two isolated browser sessions
@@ -258,7 +292,8 @@ were deleted. Browser console and physical-device verification remain open.
       rejected requests and mutation counts covered by automated tests.
 - [ ] Verify browser offline mode and physical mobile network switching.
 - [x] Check application console privacy and inspect recent local server/dev logs.
-- [ ] Inspect browser console, proxy failure logs, and production proxy logging.
+- [x] Inspect production browser console and server logs; test development proxy failure redaction.
+      This production package has no proxy; any added external proxy needs its own review.
 
 ## OS and mobile checkpoint
 

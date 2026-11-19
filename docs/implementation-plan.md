@@ -331,6 +331,12 @@ Demo: run a complete short retro from creation through discussion and closure.
   All 233 API tests and project checks passed for the logging checkpoint.
   Browser console, proxy failure/production logging, full keyboard traversal,
   and native OS/device checks remain tracked in the release checklist.
+  Local release-candidate checkpoint on 2026-11-19: production mobile viewport
+  workflow passed after fixing group-form overflow; production console/log review
+  and a real development proxy failure privacy test passed. Full regression:
+  361 tests, type/portability checks, production compilation and image build.
+  Task 17 remains open for the explicitly listed native OS, physical-device,
+  screen-reader and browser offline-mode checks; see the release verification log.
 - [x] **18 — Package local self-hosting.** Add a Docker Compose setup, persistent
   storage configuration, cleanup scheduling, and setup/operation instructions.
   Done when a fresh installation runs a full retro and survives a restart.
